@@ -1,0 +1,28 @@
+Use your built-in image generation to create three logo images for a software product named PARADOX, and save them as PNG files in the current directory with exactly these names: paradox-mark.png, paradox-icon.png, paradox-wordmark.png.
+
+About the product: PARADOX is the scheduler and job queue; every timed job of every system runs on time. The name nods to a time-travelling professor from a cartoon who is always exactly on time. The logo may evoke the idea of perfect punctuality and time, but it must be completely ORIGINAL: do not copy or reference any existing logo, cartoon character, character design, costume, symbol or glyph. No people, no faces, no characters, only an object.
+
+THE IMAGE (the symbol): an original brass pocket watch seen straight from the front.
+- A round watch case in brass gold (#E0A63A) with a single darker brass shade (#B07A22) on its lower right edge as cel shading.
+- A small round winding crown and a short loop bow on top of the case, same brass colours.
+- A warm cream face (#FDF3E1) filling most of the case.
+- Two chunky dark brown (#3A2414) hands, both pointing straight up, exactly at twelve, overlapping so they read as one bold vertical hand, with a small round dark brown hub at the centre.
+- Twelve short chunky dark brown tick marks around the face, the one at twelve slightly longer. No numerals, no letters, no digits.
+- A curling motion spiral looping around the watch: one thick ribbon-like swirl in burnt orange (#C26A26), starting low on the left, sweeping in a loose loop around behind and in front of the watch, ending in a curl near the upper right, suggesting time in motion. Keep it as one simple bold stroke with rounded ends.
+
+PALETTE: outline dark brown #3A2414, warm cream #FDF3E1, burnt orange #C26A26 (the icon's rounded-square colour and the spiral colour), brass gold #E0A63A with one shade #B07A22. No other colours.
+
+MOOD AND STYLE: friendly flat 2D cartoon logo, the same family as a playful developer-tool logo set: bold, even dark brown outlines (#3A2414) on every shape, cel shading with at most one shade per colour, clean chunky rounded shapes, flat vector look, no gradients, no textures, no glow, no 3D, no photorealism. It must stay readable at 32 px, so keep details few and large.
+
+RULES FOR ALL THREE IMAGES:
+- No text, letters, numerals or symbols in the mark or the icon. Only the wordmark carries letters.
+- Plain solid white background (#FFFFFF) on the mark and the wordmark; outside the rounded square on the icon is also plain white.
+- Original design only, as stated above.
+
+FILE 1, paradox-mark.png: square 1:1 (1024x1024). The symbol alone (watch plus spiral), centred, with a generous white margin of about 15% on every side.
+
+FILE 2, paradox-icon.png: square 1:1 (1024x1024). A rounded square filled with solid #C26A26, with a dark brown #3A2414 outline, filling most of the canvas on a white background. Inside it, the simplest form of the symbol: the brass watch with cream face, hands at twelve and the tick marks reduced to four (12, 3, 6, 9), plus a simplified spiral drawn in cream #FDF3E1 so it shows on the orange. Bold and large so it reads at 32 px. No text.
+
+FILE 3, paradox-wordmark.png: landscape 3:1 (for example 1536x512). The mark on the left, and on the right the word PARADOX in a clean bold geometric sans-serif, all capitals, in dark brown #3A2414. Spell it exactly P-A-R-A-D-O-X, seven letters, no other text, no tagline. Mark and word vertically centred, balanced spacing, plain white background.
+
+After saving, list the files with their sizes.
