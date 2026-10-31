@@ -1,9 +1,8 @@
 // Package wake starts sleeping systems before PARADOX calls them and keeps
 // them awake while a job runs (PX-RUN-01, PX-RUN-02; PRD Annex B link 7).
 //
-// The runner talks only to the Waker interface. Fake is the local stand-in
-// used until Go live; the Sablier adapter comes later and fits the same
-// interface.
+// The runner talks only to the Waker interface. Sablier is the real
+// adapter; Fake is the local stand-in for tests.
 package wake
 
 import (

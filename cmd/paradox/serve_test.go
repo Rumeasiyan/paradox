@@ -194,14 +194,14 @@ func TestServeRunsADueJobEndToEnd(t *testing.T) {
 	}
 }
 
-func TestServeRefusesAdaptersNotBuiltYet(t *testing.T) {
+func TestServeRefusesBadAdapterURLsWithoutEchoingThem(t *testing.T) {
 	_, privText, _ := sign.GenerateKey()
 	err := serve(context.Background(), &bytes.Buffer{}, envFrom(map[string]string{
 		"PARADOX_PRIVATE_KEY":   privText,
-		"PARADOX_SABLIER_URL":   "http://waker.example:10000",
-		"PARADOX_HEARTBEAT_URL": "https://monitor.example/push",
+		"PARADOX_SABLIER_URL":   "http://waker.example:10000/?x=1",
+		"PARADOX_HEARTBEAT_URL": "https://monitor.example/api/push/tok3n-secret",
 	}), nil)
-	if err == nil || !strings.Contains(err.Error(), "story 34") || !strings.Contains(err.Error(), "story 35") {
+	if err == nil || !strings.Contains(err.Error(), "PARADOX_SABLIER_URL") || strings.Contains(err.Error(), "tok3n-secret") {
 		t.Fatalf("got %v", err)
 	}
 }

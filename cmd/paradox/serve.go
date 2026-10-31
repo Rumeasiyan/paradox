@@ -55,18 +55,21 @@ func serve(ctx context.Context, stderr io.Writer, getenv func(string) string, re
 	}
 	logger := slog.New(slog.NewJSONHandler(stderr, nil))
 
-	// Adapters for the real waker and monitor arrive in backlog stories 34
-	// and 35. Until then a setting that asks for them stops the start,
-	// rather than pretending systems are awake or dropping alerts.
-	var missing []error
+	// The real waker, when any system asks to be woken. Its session lasts a
+	// keep-awake interval plus a wake timeout, so a running system is never
+	// stopped between two keep-awake calls.
+	var waker wake.Waker = wake.NewFake() // never called: no system may use wake: sablier without a Sablier URL
 	if cfg.SablierURL != "" {
-		missing = append(missing, errors.New("PARADOX_SABLIER_URL is set, but the Sablier adapter is not built yet (backlog story 34); leave it empty and use wake: none"))
+		sab, err := wake.NewSablier(cfg.SablierURL, cfg.KeepAwakeEvery+cfg.WakeTimeout, nil)
+		if err != nil {
+			return fmt.Errorf("PARADOX_SABLIER_URL: %w", err)
+		}
+		waker = sab
 	}
-	if cfg.HeartbeatURL != "" || cfg.FailureURL != "" {
-		missing = append(missing, errors.New("PARADOX_HEARTBEAT_URL or PARADOX_FAILURE_URL is set, but the push adapter is not built yet (backlog story 35); leave them empty to report to the log"))
-	}
-	if len(missing) > 0 {
-		return errors.Join(missing...)
+	// Push URLs carry tokens: errors from here never repeat them.
+	reporter, err := reporting.NewPush(cfg.HeartbeatURL, cfg.FailureURL, nil, logger)
+	if err != nil {
+		return fmt.Errorf("monitor settings: %w", err)
 	}
 
 	key, err := sign.ParsePrivateKey(cfg.PrivateKey)
@@ -96,10 +99,9 @@ func serve(ctx context.Context, stderr io.Writer, getenv func(string) string, re
 		return fmt.Errorf("timetable: %w", err)
 	}
 
-	reporter := reporting.Log{Logger: logger}
 	deps := &runner.Deps{
 		Pool:           pool,
-		Waker:          wake.NewFake(), // only reached by wake: sablier, which needs story 34 first
+		Waker:          waker,
 		Key:            sign.Signer{KeyID: sign.ParadoxKeyID, Key: key, Direction: sign.ToSystem},
 		HTTP:           &http.Client{},
 		Logger:         logger,

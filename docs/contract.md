@@ -192,9 +192,9 @@ PARADOX is configured only by environment variables and the systems folder (PX-N
 | `PARADOX_DATABASE_URL` | `postgres://paradox@localhost:5432/paradox` | PostgreSQL connection URL. |
 | `PARADOX_PRIVATE_KEY` | none, required | PARADOX's private key (section 3). |
 | `PARADOX_SYSTEM_PORT` | `8080` | Port PARADOX calls systems on when they have no `address` (PX-SYS-04). |
-| `PARADOX_SABLIER_URL` | empty | Sablier's API. Empty means no system may use `wake: sablier`. |
-| `PARADOX_HEARTBEAT_URL` | empty | Push URL called every heartbeat. Empty means the heartbeat goes to the log. |
-| `PARADOX_FAILURE_URL` | empty | Push URL for a run that failed every attempt. Empty means the log. |
+| `PARADOX_SABLIER_URL` | empty | Sablier's API. Empty means no system may use `wake: sablier`. PARADOX uses Sablier's blocking strategy with the **group named after the system** (`GET /api/strategies/blocking?group=<system>&session_duration=...&timeout=...`), so each system's containers carry that group label. The session lasts `PARADOX_KEEP_AWAKE_EVERY` plus `PARADOX_WAKE_TIMEOUT`. |
+| `PARADOX_HEARTBEAT_URL` | empty | Push URL called every heartbeat with `status=up&msg=OK` added to its query (Uptime Kuma push format). Empty means the heartbeat goes to the log. The URL holds a token, so PARADOX never logs it. |
+| `PARADOX_FAILURE_URL` | empty | Push URL for a run that failed every attempt: `status=down` with a one-line message (system, job, run ID, attempts, last error; at most 250 characters, never job data). Every heartbeat pushes `status=up` here too, so the monitor recovers and each new failure alerts again; give this monitor an interval longer than `PARADOX_HEARTBEAT_EVERY`. Empty means the log. |
 | `PARADOX_HEARTBEAT_EVERY` | `60s` | Heartbeat interval (PX-REP-03). |
 | `PARADOX_SIGNATURE_WINDOW` | `5m` | Allowed clock difference for signatures (PX-SIG-03). |
 | `PARADOX_WAKE_TIMEOUT` | `2m` | How long to wait for a woken system (PX-RUN-01). |

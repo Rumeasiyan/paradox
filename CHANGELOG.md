@@ -2,6 +2,13 @@
 
 All notable changes to PARADOX. The version is in `VERSION`; it follows semantic versioning and changes with every completed change that alters behaviour (see `AGENTS.md`, Versioning).
 
+## 0.13.0
+
+- Real waker: with `PARADOX_SABLIER_URL` set, systems with `wake: sablier` are woken through Sablier's blocking strategy, using a group named after the system, and kept awake by renewing the session (`PARADOX_KEEP_AWAKE_EVERY` plus `PARADOX_WAKE_TIMEOUT`).
+- Real monitor: `PARADOX_HEARTBEAT_URL` and `PARADOX_FAILURE_URL` take Uptime Kuma-style push URLs. Heartbeats push `up`; a run that fails every attempt pushes `down` with a one-line message; the next heartbeat clears it. URLs and their tokens never appear in logs or errors.
+- `serve` no longer refuses these settings.
+- Container image (distroless, non-root, read-only friendly) and CI; images are published only from a `v*` tag equal to `VERSION`.
+
 ## 0.12.2
 
 - Security: builds now require Go 1.27.3 (`toolchain` in `go.mod`), which fixes ten standard-library vulnerabilities in HTTP/2, `net/http`, TLS and X.509 that `govulncheck` found reachable from PARADOX's code. `govulncheck` now reports none.
