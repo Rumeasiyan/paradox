@@ -2,6 +2,10 @@
 
 All notable changes to PARADOX. The version is in `VERSION`; it follows semantic versioning and changes with every completed change that alters behaviour (see `AGENTS.md`, Versioning).
 
+## 0.2.0
+
+- Go module and the `paradox` command; `paradox -version` prints the version from `VERSION`.
+
 ## 0.1.0
 
 Design baseline. No runnable code yet.

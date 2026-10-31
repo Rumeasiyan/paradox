@@ -6,7 +6,7 @@ Guide for AI agents and new contributors. Read it before changing anything. `CLA
 
 PARADOX is a scheduler and job queue for systems that sleep when idle (scaled to zero by Sablier). Systems declare timed jobs in a schedule file or queue one-off jobs; PARADOX wakes the system, calls its job address with a signed request, retries failures, reports what still fails to a push monitor, and records every run. It is a public, generic Apache-2.0 project: one deployment runs it for several systems on a shared Docker server, and its real settings live in that deployment's own private repository, never here.
 
-Status: design is frozen (PRD v1.1); no Go code exists yet. Work is planned as GitHub issues.
+Status: design is frozen (PRD v1.1); the build follows `docs/backlog.md`.
 
 ## Where to look
 
@@ -43,7 +43,8 @@ Status: design is frozen (PRD v1.1); no Go code exists yet. Work is planned as G
 | Re-render the architecture diagram after editing the `.dot` | `dot -Tsvg docs/diagrams/paradox-architecture.dot -o docs/diagrams/paradox-architecture.svg` |
 | Redraw the data model and rewrite the PRD dictionary | `python3 docs/diagrams/build_erd.py` |
 | Read the version | `cat VERSION` |
-| Go checks (once `go.mod` exists; Go 1.27) | `gofmt -l .`, `go vet ./...`, `go test ./...` |
+| Go checks (Go 1.27) | `gofmt -l .` (must print nothing), `go vet ./...`, `go test ./...` |
+| Run the command | `go run ./cmd/paradox -version` |
 
 ## Conventions
 
@@ -55,7 +56,7 @@ Status: design is frozen (PRD v1.1); no Go code exists yet. Work is planned as G
 
 ## Versioning
 
-- **Source of truth:** `VERSION` (currently `0.1.0`). Nothing else holds a hand-written version. The Go build and the image tag must read it.
+- **Source of truth:** `VERSION`. Nothing else holds a hand-written version: `version.go` embeds the file (`paradox.Version`), and the image tag must read it too.
 - **When:** bump with every completed change that alters behaviour, in the same commit, and add a `CHANGELOG.md` entry.
 
 | Change | Bump | Example |
