@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
@@ -100,6 +101,15 @@ func TestServeRunsADueJobEndToEnd(t *testing.T) {
 	}
 	if err := health.Probe(ctx, "http://"+listen+health.Path); err != nil {
 		t.Fatalf("health: %v", err)
+	}
+	// The queue API is served and refuses an unsigned request.
+	resp, err := http.Post("http://"+listen+"/api/jobs", "application/json", strings.NewReader(`{"job":"ping","request_id":"x"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("unsigned queue request: %d, want 401", resp.StatusCode)
 	}
 
 	// Make ping due now; the scheduler ticks every second.

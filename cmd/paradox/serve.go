@@ -18,6 +18,7 @@ import (
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 
 	"github.com/Rumeasiyan/paradox"
+	"github.com/Rumeasiyan/paradox/internal/api"
 	"github.com/Rumeasiyan/paradox/internal/config"
 	"github.com/Rumeasiyan/paradox/internal/db"
 	"github.com/Rumeasiyan/paradox/internal/health"
@@ -119,8 +120,20 @@ func serve(ctx context.Context, stderr io.Writer, getenv func(string) string, re
 		return err
 	}
 
+	queueAPI := (&api.API{
+		Pool:          pool,
+		River:         rc,
+		Keys:          systems.NewIndex(list).Keys,
+		Window:        cfg.SignatureWindow,
+		MaxDataBytes:  cfg.MaxDataBytes,
+		MaxAhead:      cfg.MaxAhead,
+		RequestIDKeep: cfg.RequestIDKeep,
+		Logger:        logger,
+	}).Handler()
 	mux := http.NewServeMux()
 	mux.Handle(health.Path, health.Handler(health.DBCheck(pool), logger))
+	mux.Handle(api.Prefix, queueAPI)
+	mux.Handle(api.Prefix+"/", queueAPI)
 	srv := &http.Server{Handler: mux, ReadHeaderTimeout: 10 * time.Second}
 	ln, err := net.Listen("tcp", cfg.Listen)
 	if err != nil {

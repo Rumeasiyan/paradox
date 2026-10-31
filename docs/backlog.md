@@ -81,8 +81,8 @@ Tracked in #4.
 
 | # | Done | Run | ID | Story | Cites | Pri | Needs |
 |---|---|---|---|---|---|---|---|
-| 18 | [ ] | Solo | E-JOB-01 | Queue API: accept a system's own job, data and start-time limits | PX-JOB-01, PX-JOB-02; HW B1, HW B4, HW B5 | Must | 7, 16 |
-| 19 | [ ] | Solo | E-SIG-02 | Signature and ownership checks on every queue request | PX-SIG-02, PX-SIG-03, PX-SIG-04, PX-SIG-05, PX-NFR-06; HW B2, HW B3 | Must | 18 |
+| 18 | [x] | Solo | E-JOB-01 | Queue API: accept a system's own job, data and start-time limits | PX-JOB-01, PX-JOB-02; HW B1, HW B4, HW B5 | Must | 7, 16 |
+| 19 | [x] | Solo | E-SIG-02 | Signature and ownership checks on every queue request | PX-SIG-02, PX-SIG-03, PX-SIG-04, PX-SIG-05, PX-NFR-06; HW B2, HW B3 | Must | 18 |
 | 20 | [ ] | Wave 2 | E-JOB-02 | Repeated request ID returns the first run | PX-JOB-03 | Must | 19 |
 | 21 | [ ] | Wave 2 | E-JOB-03 | Job status for the owning system | PX-JOB-04 | Must | 19 |
 | 22 | [ ] | Wave 2 | E-JOB-04 | Cancel a queued job | PX-JOB-05 | Must | 19 |

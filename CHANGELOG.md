@@ -2,6 +2,12 @@
 
 All notable changes to PARADOX. The version is in `VERSION`; it follows semantic versioning and changes with every completed change that alters behaviour (see `AGENTS.md`, Versioning).
 
+## 0.7.0
+
+- Queue API on `PARADOX_LISTEN`: `POST /api/jobs` queues one of the calling system's own jobs, with data up to `PARADOX_MAX_DATA_BYTES` and an optional `run_at` up to `PARADOX_MAX_AHEAD` ahead (contract section 6).
+- Every API request must carry a valid signature from a current system, for the system-to-PARADOX direction, within the window; otherwise 401, and a job of another system gets 403. Refusals are logged with the claimed system and the reason, never the data.
+- Reading and cancelling a run answer 501 until their stories land.
+
 ## 0.6.0
 
 - `paradox serve` runs the service: reads settings and the systems folder, migrates the database, loads the timetable, runs due jobs through the worker and answers `/healthz`.
