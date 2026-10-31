@@ -23,6 +23,7 @@ Status: design is frozen (PRD v1.3); the build follows `docs/backlog.md`.
 | `CHANGELOG.md`, `VERSION` | Release history and the one version number. |
 | `CONTRIBUTING.md`, `SECURITY.md` | Contribution rules (DCO) and private vulnerability reporting. |
 | `sign/` | The signing helper, a separate Go module with its own version, imported by systems. Standard library only. Its signature base is pinned by `TestSignatureBaseIsStable`: if that test must change, the contract has a breaking change. |
+| `Dockerfile`, `.github/workflows/` | The image (distroless, non-root, read-only friendly, health check `paradox -healthcheck`) and CI. `image.yml` publishes only when a `v*` tag equal to `VERSION` is pushed; pushing that tag needs the owner's go-ahead. |
 | `dev/` | Local stack for development and tests only; its passwords are throwaway. |
 | `brand/` | Logo files and the prompt that generated them (`brand/prompt.txt`). |
 
@@ -49,6 +50,7 @@ Status: design is frozen (PRD v1.3); the build follows `docs/backlog.md`.
 | Read the version | `cat VERSION` |
 | Go checks (Go 1.27; `go.work` joins the service and the `sign` module) | `gofmt -l .` (must print nothing), `go vet ./... ./sign/...`, `go test ./... ./sign/...` |
 | Run the command | `go run ./cmd/paradox -version` |
+| Build the image locally | `docker build --build-arg VERSION=$(cat VERSION) -t paradox:local .` |
 | Vulnerability scan (must be clean before a release or image) | `go run golang.org/x/vuln/cmd/govulncheck@latest ./...` |
 | Capacity check (slow, needs the local stack) | `PARADOX_LOAD_TEST=1 PARADOX_TEST_DATABASE_URL=... go test -count=1 -p 1 -run TestCapacity -v -timeout 15m ./internal/runner/` |
 | Local database for tests (PostgreSQL + PgBouncer, session pool of 2, non-superuser role) | `docker compose -f dev/compose.yaml up -d`, then `export PARADOX_TEST_DATABASE_URL=postgres://paradox:paradox@localhost:6432/paradox PARADOX_TEST_DIRECT_URL=postgres://paradox:paradox@localhost:55433/paradox` (the direct URL is for tests that watch the database while PARADOX holds both PgBouncer connections). Database tests skip without it; run them with `go test -p 1 ./...` (they share one database) before marking a database story done. |

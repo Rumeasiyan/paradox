@@ -1,0 +1,10 @@
+.git
+.claude
+.github
+brand
+dev
+docs
+*.md
+!go.mod
+go.work
+go.work.sum
