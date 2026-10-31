@@ -38,7 +38,7 @@ Tracked in #2.
 | # | Done | Run | ID | Story | Cites | Pri | Needs |
 |---|---|---|---|---|---|---|---|
 | 1 | [x] | Solo | E-ENB-01 | Go module skeleton, `paradox -version` read from `VERSION` | PX-NFR-07 | Must | |
-| 2 | [ ] | Solo | E-SYS-01 | Settings from the environment with generic defaults | PX-NFR-07, PX-SYS-04 | Must | 1 |
+| 2 | [x] | Solo | E-SYS-01 | Settings from the environment with generic defaults | PX-NFR-07, PX-SYS-04 | Must | 1 |
 | 3 | [ ] | Solo | E-SCH-01 | Schedule file parser with file, line and fault in errors | PX-SCH-02, PX-SCH-04, PX-SYS-03, PX-SYS-04, PX-CON-01 | Must | 1 |
 | 4 | [ ] | Solo | E-SYS-02 | Systems folder reader: schedule file and public keys per system | PX-SCH-01, PX-SYS-01, PX-SYS-02, PX-SYS-05, PX-SIG-06 | Must | 2, 3 |
 | 5 | [ ] | Solo | E-SIG-01 | Signing helper module: sign and verify in both directions | PX-SIG-01, PX-SIG-02, PX-SIG-03, PX-SIG-04, PX-SIG-06, PX-CON-03 | Must | 1 |
