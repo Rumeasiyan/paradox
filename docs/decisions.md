@@ -8,6 +8,16 @@ Format: date, title, **Decision**, **Why** (including what was rejected and the 
 
 ---
 
+## 2026-10-31: Go-live rehearsal passed against real Sablier and Uptime Kuma
+
+**Decision:** `dev/e2e/run.sh` is the go-live rehearsal: the image as built, read-only under 250 MB, against Sablier 1.19.1, Uptime Kuma 1 and PostgreSQL behind PgBouncer (session, pool 2), with `paradox testsystem` as a sleeping system. It passed, and the contract now requires Sablier 1.19 or later.
+
+**Why:** Both adapters were built against fakes from reading source; the real services decide. Confirmed: Sablier's blocking strategy answers `200` with `X-Sablier-Session-Status: ready` only once the container is healthy, `504` after exactly the requested timeout when it never is, and `404` for an unknown group; a stopped system was woken, called and succeeded (queued and scheduled), and went back to sleep when its session ended. Kuma accepted the push format: heartbeats arrived as UP, a failed run arrived on the failure monitor as DOWN with "jobtest/fail run ... failed after 2 attempts: answered 500: failed on purpose", and the next heartbeat set it UP again. Older Sablier versions may answer a timeout differently, hence the minimum.
+
+**Consequences:** On the server, each system's containers need the label `sablier.group=<system name>`, and the failure monitor's interval must be longer than `PARADOX_HEARTBEAT_EVERY`. The rehearsal is repeatable before every release.
+
+**Refs:** `dev/e2e/`, `internal/wake/sablier.go`, `internal/report/push.go`, PX-RUN-01, PX-RUN-02, PX-REP-02, PX-REP-03
+
 ## 2026-10-31: Go toolchain pinned to the patched release; govulncheck before release
 
 **Decision:** `go.mod` and `go.work` name `toolchain go1.27.3`, so every build uses at least that patched Go, and `govulncheck ./...` must report nothing before a release or image.

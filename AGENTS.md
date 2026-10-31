@@ -50,6 +50,7 @@ Status: design is frozen (PRD v1.3); the build follows `docs/backlog.md`.
 | Read the version | `cat VERSION` |
 | Go checks (Go 1.27; `go.work` joins the service and the `sign` module) | `gofmt -l .` (must print nothing), `go vet ./... ./sign/...`, `go test ./... ./sign/...` |
 | Run the command | `go run ./cmd/paradox -version` |
+| Go-live rehearsal with real Sablier and Uptime Kuma (before a release) | `dev/e2e/run.sh`, then `dev/e2e/run.sh down` |
 | Build the image locally | `docker build --build-arg VERSION=$(cat VERSION) -t paradox:local .` |
 | Vulnerability scan (must be clean before a release or image) | `go run golang.org/x/vuln/cmd/govulncheck@latest ./...` |
 | Capacity check (slow, needs the local stack) | `PARADOX_LOAD_TEST=1 PARADOX_TEST_DATABASE_URL=... go test -count=1 -p 1 -run TestCapacity -v -timeout 15m ./internal/runner/` |

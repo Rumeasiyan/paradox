@@ -1,0 +1,64 @@
+# Go-live rehearsal on one machine (backlog story 37): PARADOX and its
+# test system from the local image, with a real Sablier, a real Uptime
+# Kuma, and PostgreSQL behind PgBouncer in session mode with a pool of 2.
+# Run it with dev/e2e/run.sh, which makes the keys and settings in
+# $E2E_DIR (outside the repository) first. Throwaway values only.
+name: paradox-e2e
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - ../initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d paradox"]
+      interval: 2s
+      retries: 30
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    environment:
+      DATABASE_URL: postgres://paradox:paradox@postgres:5432/paradox
+      POOL_MODE: session
+      DEFAULT_POOL_SIZE: "2"
+      AUTH_TYPE: scram-sha-256
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  sablier:
+    image: sablierapp/sablier:1.19.1
+    command: ["start", "--provider.name=docker", "--logging.level=debug"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  kuma:
+    image: louislam/uptime-kuma:1
+    ports:
+      - "127.0.0.1:3001:3001"
+
+  # The sleeping system: stopped by run.sh, started by Sablier on demand.
+  jobtest:
+    image: paradox:local
+    command: ["testsystem"]
+    read_only: true
+    env_file: ${E2E_DIR}/jobtest.env
+    labels:
+      sablier.enable: "true"
+      sablier.group: jobtest
+
+  paradox:
+    image: paradox:local
+    read_only: true
+    mem_limit: 250m
+    cpus: 1
+    env_file: ${E2E_DIR}/paradox.env
+    volumes:
+      - ${E2E_DIR}/systems:/systems:ro
+      - ${E2E_DIR}/keys/jobtest.key:/keys/jobtest.key:ro
+    depends_on:
+      - pgbouncer
+      - sablier
