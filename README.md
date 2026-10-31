@@ -8,6 +8,14 @@ The scheduler and job queue for systems that sleep when idle. Systems declare th
 - [Contract](docs/contract.md): what deployments and systems build against.
 - [Product requirements](docs/prd.md): what PARADOX does, and the reference architecture (Annex B).
 
+## Run
+
+```
+paradox keygen -out paradox.key        # once: PARADOX's key pair
+paradox serve                          # settings from PARADOX_* variables, see docs/contract.md section 7
+paradox -healthcheck                   # container health check
+```
+
 **Why the name.** Named after Professor Paradox in *Ben 10*, who is never late, because he is always exactly where he needs to be in time.
 
 ## Licence

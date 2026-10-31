@@ -66,14 +66,14 @@ Tracked in #4; story 9 answers #3.
 | 14 | [x] | Wave 1 | E-REP-02 | Health check tied to the database | PX-REP-04 | Must | 10 |
 | 15 | [x] | Wave 1 | E-ENB-03 | Test system command `paradox testsystem` that answers `/jobs/<name>` | HW A8, HW A9 | Must | 4 |
 | 16 | [x] | Solo | E-RUN-02 | Runner: due job, run, wake, signed call, time limit, record | PX-RUN-01, PX-RUN-02, PX-RUN-03, PX-REC-01; HW A4 to A12 | Must | 11, 12, 15 |
-| 17 | [ ] | Solo | E-REP-03 | Retries with backoff, then one failure report; the service starts with `paradox` | PX-REP-01, PX-REP-02; HW A13 to A15 | Must | 13, 16 |
+| 17 | [x] | Solo | E-REP-03 | Retries with backoff, then one failure report; the service starts with `paradox serve` | PX-REP-01, PX-REP-02; HW A13 to A15 | Must | 13, 16 |
 
 Notes:
 - **E-ENB-02:** if River's documentation rules out session mode, switch to polling, record it in the decision log and tell the deployment's maintainers.
 - **E-RUN-01:** the stand-in can be told to answer ready, answer late, or time out, so PX-RUN-01's limit is testable.
 - **E-ENB-03:** a subcommand of the same binary, so a deployment can run the PARADOX image as its sleeping test target. It checks PARADOX's signature with the helper (answers 401 if wrong) and can be set per job to succeed, fail or answer too slowly.
 - **E-RUN-02:** each River job carries only the `run_id` (Annex A); job data stays on the run.
-- **E-REP-03:** also wires everything into the service command (`paradox` with no arguments: settings, systems folder, migrations, timetable, River, scheduler, health and heartbeat), so R2 can be walked end to end.
+- **E-REP-03:** also wires everything into the service command (`paradox serve`: settings, systems folder, migrations, timetable, River, scheduler, health and heartbeat), so R2 can be walked end to end.
 
 ## R3 Queued job
 

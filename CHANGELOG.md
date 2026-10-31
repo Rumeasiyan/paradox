@@ -2,6 +2,13 @@
 
 All notable changes to PARADOX. The version is in `VERSION`; it follows semantic versioning and changes with every completed change that alters behaviour (see `AGENTS.md`, Versioning).
 
+## 0.6.0
+
+- `paradox serve` runs the service: reads settings and the systems folder, migrates the database, loads the timetable, runs due jobs through the worker and answers `/healthz`.
+- A failed attempt is retried after `PARADOX_RETRY_DELAYS` (the last delay repeats); a run that fails every attempt is reported once (to the log until the push adapter exists) and `reported_at` is recorded.
+- Startup gives up after 30 seconds if the database does not answer, naming the likely cause (another process holding the connection pool).
+- Until their adapters exist, `serve` refuses to start when `PARADOX_SABLIER_URL`, `PARADOX_HEARTBEAT_URL` or `PARADOX_FAILURE_URL` is set.
+
 ## 0.5.0
 
 - `paradox testsystem` runs a stand-in system that checks PARADOX's signature and answers `/jobs/<name>`; settings in `docs/testsystem.md`.

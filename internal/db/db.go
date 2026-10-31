@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -24,6 +25,9 @@ import (
 
 // MaxConns is the most connections PARADOX opens; it matches the pool of 2.
 const MaxConns = 2
+
+// OpenTimeout is how long Open waits for the database to answer.
+const OpenTimeout = 30 * time.Second
 
 // PollInterval is how often River looks for due jobs.
 const PollInterval = time.Second
@@ -45,8 +49,15 @@ func Open(ctx context.Context, url string) (*pgxpool.Pool, error) {
 	if err != nil {
 		return nil, fmt.Errorf("database: %w", err)
 	}
-	if err := pool.Ping(ctx); err != nil {
+	pctx, cancel := context.WithTimeout(ctx, OpenTimeout)
+	defer cancel()
+	if err := pool.Ping(pctx); err != nil {
 		pool.Close()
+		if errors.Is(pctx.Err(), context.DeadlineExceeded) && ctx.Err() == nil {
+			// In session mode a connection waits until a pool slot is free,
+			// so a hang here usually means another process holds the pool.
+			return nil, fmt.Errorf("database did not answer within %s; is another PARADOX still holding the connection pool? %w", OpenTimeout, err)
+		}
 		return nil, fmt.Errorf("database not reachable: %w", err)
 	}
 	return pool, nil

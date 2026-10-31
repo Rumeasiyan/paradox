@@ -53,10 +53,12 @@ type Deps struct {
 	Key            sign.Signer // KeyID sign.ParadoxKeyID, Direction sign.ToSystem
 	HTTP           *http.Client
 	Logger         *slog.Logger
-	Location       *time.Location // PARADOX_TIMEZONE
-	WakeTimeout    time.Duration  // PARADOX_WAKE_TIMEOUT
-	KeepAwakeEvery time.Duration  // PARADOX_KEEP_AWAKE_EVERY
-	SystemPort     int            // PARADOX_SYSTEM_PORT
+	Location       *time.Location  // PARADOX_TIMEZONE
+	WakeTimeout    time.Duration   // PARADOX_WAKE_TIMEOUT
+	KeepAwakeEvery time.Duration   // PARADOX_KEEP_AWAKE_EVERY
+	SystemPort     int             // PARADOX_SYSTEM_PORT
+	RetryDelays    []time.Duration // PARADOX_RETRY_DELAYS; the last one repeats
+	Reporter       report.Reporter
 	// BaseURL returns where a system is called. Nil means its address, or
 	// http://<name>:<SystemPort> when it has none. Tests replace it.
 	BaseURL func(system, address string) string
@@ -84,6 +86,27 @@ func (d *Deps) baseURL(system, address string) string {
 type Worker struct {
 	river.WorkerDefaults[RunArgs]
 	D *Deps
+}
+
+// NextRetry spaces retries by PARADOX_RETRY_DELAYS (PX-REP-01): the first
+// retry waits the first delay, the second the second, and any further
+// retry the last one. job.Attempt counts attempts made so far.
+func (w *Worker) NextRetry(job *river.Job[RunArgs]) time.Time {
+	return w.D.now().Add(retryDelay(w.D.RetryDelays, job.Attempt))
+}
+
+func retryDelay(delays []time.Duration, attemptsMade int) time.Duration {
+	if len(delays) == 0 {
+		return time.Minute
+	}
+	i := attemptsMade - 1
+	if i < 0 {
+		i = 0
+	}
+	if i >= len(delays) {
+		i = len(delays) - 1
+	}
+	return delays[i]
 }
 
 // Timeout lets an attempt last as long as a wake plus the job's own time
@@ -137,6 +160,7 @@ func (w *Worker) Work(ctx context.Context, job *river.Job[RunArgs]) error {
 		return nil
 	case final:
 		log.Warn("run failed, no attempts left", "outcome", out.result, "error", out.err)
+		w.reportFailure(context.WithoutCancel(ctx), r, out, log)
 		return river.JobCancel(errors.New(out.err))
 	default:
 		log.Info("attempt failed, will retry", "outcome", out.result, "error", out.err)
@@ -277,4 +301,25 @@ func (w *Worker) finish(ctx context.Context, r run, out outcome) (final bool, er
 		return err
 	})
 	return final, err
+}
+
+// reportFailure tells the monitor once about a run that failed every
+// attempt (PX-REP-02), then records when. The report carries names and the
+// last error only, never the job data.
+func (w *Worker) reportFailure(ctx context.Context, r run, out outcome, log *slog.Logger) {
+	if w.D.Reporter == nil {
+		return
+	}
+	var already bool
+	if err := w.D.Pool.QueryRow(ctx, `SELECT reported_at IS NOT NULL FROM run WHERE id = $1`, r.id).Scan(&already); err != nil || already {
+		return
+	}
+	f := report.NewFailure(r.system, r.job, r.id, r.attempt, out.err)
+	if err := w.D.Reporter.Failure(ctx, f); err != nil {
+		log.Error("failure report not sent", "error", err)
+		return
+	}
+	if _, err := w.D.Pool.Exec(ctx, `UPDATE run SET reported_at = $2 WHERE id = $1 AND reported_at IS NULL`, r.id, w.D.now()); err != nil {
+		log.Error("failure report sent but not recorded", "error", err)
+	}
 }

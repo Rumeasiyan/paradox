@@ -3,6 +3,7 @@
 #
 #   docker compose -f dev/compose.yaml up -d
 #   export PARADOX_TEST_DATABASE_URL=postgres://paradox:paradox@localhost:6432/paradox
+#   export PARADOX_TEST_DIRECT_URL=postgres://paradox:paradox@localhost:55433/paradox
 #   go test ./...
 #
 # PgBouncer runs in session mode with a pool of 2, as in the reference
@@ -17,6 +18,10 @@ services:
       POSTGRES_PASSWORD: admin
     volumes:
       - ./initdb:/docker-entrypoint-initdb.d:ro
+    # Direct port for tests that watch the database while PARADOX holds
+    # PgBouncer's two session connections (PARADOX_TEST_DIRECT_URL).
+    ports:
+      - "127.0.0.1:55433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin -d paradox"]
       interval: 2s

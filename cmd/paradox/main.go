@@ -20,6 +20,7 @@ func main() {
 }
 
 const usage = `usage:
+  paradox serve               run PARADOX (settings from PARADOX_* variables)
   paradox -version            print the version
   paradox keygen -out FILE    create a key pair: private half to FILE, public half printed
   paradox pubkey [-in FILE]   print the public half of a private key (default: PARADOX_PRIVATE_KEY)
@@ -35,6 +36,8 @@ func run(args []string, stdout, stderr io.Writer, getenv func(string) string) in
 			return report(stderr, keygen(args[1:], stdout, stderr))
 		case "pubkey":
 			return report(stderr, pubkey(args[1:], stdout, stderr, getenv))
+		case "serve":
+			return report(stderr, runServe(args[1:], stderr, getenv))
 		case "testsystem":
 			return report(stderr, runTestSystem(args[1:], stdout, stderr, getenv))
 		}

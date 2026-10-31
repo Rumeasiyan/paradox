@@ -8,6 +8,16 @@ Format: date, title, **Decision**, **Why** (including what was rejected and the 
 
 ---
 
+## 2026-10-31: One PARADOX process per connection pool; stop before start
+
+**Decision:** Only one PARADOX process may use its PgBouncer pool at a time. A deployment stops the old process before starting the new one (Compose's default recreate), and nothing else connects through PARADOX's pool entry. If the database does not answer within 30 seconds at start, PARADOX exits with a message naming this as the likely cause.
+
+**Why:** In session mode a client keeps its server connection while it is open, and PARADOX uses both of the pool's two. A second PARADOX, an overlapping redeploy, or a tool connecting through the same entry waits for a free connection that never comes: the local end-to-end test hung exactly this way when the test itself held connections. Rejected: a larger pool to allow overlap (two schedulers running at once gains nothing; SKIP LOCKED already stops double runs, but the old process would hold the pool until it exits anyway). Tools that inspect the database use a direct connection, not the pool.
+
+**Consequences:** Rolling deploys with overlap are not supported; a restart has a short gap, which missed-job catch-up (PX-SCH-05) covers. Local tests that watch the database use `PARADOX_TEST_DIRECT_URL`.
+
+**Refs:** `internal/db`, `cmd/paradox/serve.go`, `dev/compose.yaml`
+
 ## 2026-10-31: Daylight saving: each skipped or repeated time runs once
 
 **Decision:** Schedule times are worked out in `PARADOX_TIMEZONE` and stored in UTC. A time skipped when clocks go forward runs once, at the first real instant after the gap. A time repeated when clocks go back runs only at its first occurrence, for every field, so an hourly job gets one run, not two, in the repeated hour. `@every` schedules count real elapsed time. Changing `PARADOX_TIMEZONE` alone does not move an already stored next due time; the one after it uses the new zone.
