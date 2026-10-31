@@ -111,7 +111,9 @@ func retryDelay(delays []time.Duration, attemptsMade int) time.Duration {
 
 // Timeout lets an attempt last as long as a wake plus the job's own time
 // limit, with a margin for recording the result. River's own default (one
-// minute) would cut longer jobs off.
+// minute) would cut longer jobs off. River's rescuer also leaves a running
+// job alone until this has passed (db.RescueStuckJobsAfter), so a live
+// attempt is never handed out twice.
 func (w *Worker) Timeout(job *river.Job[RunArgs]) time.Duration {
 	return w.D.WakeTimeout + time.Duration(job.Args.TimeoutS)*time.Second + 30*time.Second
 }
@@ -138,18 +140,40 @@ type outcome struct {
 	err    string // empty on success
 }
 
+// Errors recorded on an attempt that was cut off rather than finished
+// (PX-RUN-05).
+const (
+	// errInterruptedByCrash closes an attempt found still open when its run
+	// is picked up again: PARADOX crashed or was killed during it.
+	errInterruptedByCrash = "interrupted: PARADOX stopped during the attempt"
+	// errInterruptedByShutdown closes an attempt whose work was cancelled
+	// because PARADOX was shutting down and the grace period ran out.
+	errInterruptedByShutdown = "interrupted by shutdown"
+)
+
 // Work carries out one attempt of a run.
 func (w *Worker) Work(ctx context.Context, job *river.Job[RunArgs]) error {
-	r, ok, err := w.start(ctx, job.Args.RunID)
+	r, next, err := w.start(ctx, job)
 	if err != nil {
 		return err
 	}
-	if !ok {
+	switch next {
+	case stepSkip:
 		return nil // cancelled or already finished: nothing to do
+	case stepFailedAfterCrash:
+		log := w.D.Logger.With("system", r.system, "job", r.job, "run_id", r.id, "attempt", r.attempt)
+		log.Warn("run failed, its last attempt was interrupted and no attempts are left", "error", errInterruptedByCrash)
+		w.reportFailure(context.WithoutCancel(ctx), r, outcome{result: "error", err: errInterruptedByCrash}, log)
+		return river.JobCancel(errors.New(errInterruptedByCrash))
 	}
 	log := w.D.Logger.With("system", r.system, "job", r.job, "run_id", r.id, "attempt", r.attempt)
 
 	out := w.attempt(ctx, r, log)
+	if out.result != "success" && stoppedByShutdown(ctx) {
+		// Whatever the attempt saw (a cancelled call or wake) was caused by
+		// the shutdown, so that is what is recorded (PX-RUN-05).
+		out = outcome{result: "error", err: errInterruptedByShutdown}
+	}
 	final, err := w.finish(context.WithoutCancel(ctx), r, out)
 	if err != nil {
 		return err
@@ -168,10 +192,40 @@ func (w *Worker) Work(ctx context.Context, job *river.Job[RunArgs]) error {
 	}
 }
 
+// stoppedByShutdown reports whether the attempt's context was cancelled
+// by River stopping (PARADOX shutting down) rather than by its time limit
+// or a remote cancel of the job.
+func stoppedByShutdown(ctx context.Context) bool {
+	return errors.Is(ctx.Err(), context.Canceled) && !errors.Is(context.Cause(ctx), river.ErrJobCancelledRemotely)
+}
+
+// nextStep is what start decided.
+type nextStep int
+
+const (
+	stepSkip             nextStep = iota // nothing to do
+	stepCarryOut                         // an attempt is open: carry it out
+	stepFailedAfterCrash                 // the interrupted attempt was the last: run failed
+)
+
 // start marks the run running and opens an attempt, in one short
-// transaction. ok is false when the run is no longer queued.
-func (w *Worker) start(ctx context.Context, runID string) (r run, ok bool, err error) {
+// transaction.
+//
+// A run already running here had its attempt cut off by a crash or a hard
+// stop: a live attempt holds its River job, so River hands the job out
+// again only after rescuing it (issue #8, PX-RUN-05). start closes the
+// open attempt as an error, then opens the next attempt, or fails the run
+// when none are left.
+//
+// It also keeps the River job's own attempt limit one above the attempt it
+// is starting. The run's max_attempts is the real limit (Work cancels the
+// River job once the run fails), but River's rescuer discards a stuck job
+// that has used all its River attempts without calling the worker, which
+// would leave a run cut off during its last attempt running for ever.
+func (w *Worker) start(ctx context.Context, job *river.Job[RunArgs]) (r run, next nextStep, err error) {
+	runID := job.Args.RunID
 	err = pgx.BeginFunc(ctx, w.D.Pool, func(tx pgx.Tx) error {
+		next = stepSkip
 		var state string
 		var timeoutS int
 		var address *string
@@ -186,16 +240,33 @@ func (w *Worker) start(ctx context.Context, runID string) (r run, ok bool, err e
 		if err != nil {
 			return err
 		}
-		if state != "queued" || r.attempt >= r.maxAttempts {
+		r.id = runID
+		now := w.D.now()
+		switch {
+		case state == "running":
+			if _, err := tx.Exec(ctx, `
+				UPDATE attempt SET ended_at = $2, outcome = 'error', error = $3 WHERE run_id = $1 AND ended_at IS NULL`,
+				runID, now, errInterruptedByCrash); err != nil {
+				return err
+			}
+			if r.attempt >= r.maxAttempts {
+				// The job data is wiped as soon as the run ends (PX-REC-02).
+				if _, err := tx.Exec(ctx, `
+					UPDATE run SET state = 'failed', finished_at = $2, data = NULL, last_error = $3 WHERE id = $1`,
+					runID, now, errInterruptedByCrash); err != nil {
+					return err
+				}
+				next = stepFailedAfterCrash
+				return nil
+			}
+		case state != "queued" || r.attempt >= r.maxAttempts:
 			return nil
 		}
-		r.id = runID
 		if address != nil {
 			r.address = *address
 		}
 		r.timeout = time.Duration(timeoutS) * time.Second
 		r.attempt++
-		now := w.D.now()
 		if _, err := tx.Exec(ctx, `
 			UPDATE run SET state = 'running', attempts = $2, started_at = coalesce(started_at, $3)
 			WHERE id = $1`, runID, r.attempt, now); err != nil {
@@ -206,10 +277,15 @@ func (w *Worker) start(ctx context.Context, runID string) (r run, ok bool, err e
 			runID, r.attempt, now).Scan(&r.attemptID); err != nil {
 			return err
 		}
-		ok = true
+		if _, err := tx.Exec(ctx, `
+			UPDATE river_job SET max_attempts = $2 WHERE id = $1 AND max_attempts < $2`,
+			job.ID, job.Attempt+1); err != nil {
+			return err
+		}
+		next = stepCarryOut
 		return nil
 	})
-	return r, ok, err
+	return r, next, err
 }
 
 // attempt wakes the system if needed and calls it. No database connection

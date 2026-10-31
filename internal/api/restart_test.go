@@ -203,19 +203,12 @@ func TestQueuedJobWithRunAtRunsAtItsTimeAfterRestart(t *testing.T) {
 	}
 }
 
-// PX-RUN-05: a run that was mid-attempt when PARADOX crashed must be
-// retried after the restart. The crash is simulated in SQL: the run is
-// running with an open attempt, and its River job is running, attempted
-// two hours ago by a process that no longer exists.
-//
-// What happens today: River's rescuer (leader only, after
-// RescueStuckJobsAfter, one hour by default, and the worker's own Timeout)
-// moves the River job to retryable. The worker then picks it up, but
-// Worker.start only runs runs in state queued, so it returns without
-// calling the system and River marks its job completed. The run stays
-// running forever, its data is never wiped, and nothing retries it. This
-// test checks the expected behaviour and, while the gap remains, confirms
-// the gap exactly and skips. The fix belongs to the shutdown story.
+// PX-RUN-05, issue #8: a run that was mid-attempt when PARADOX crashed
+// must be retried after the restart. The crash is simulated in SQL: the
+// run is running with an open attempt, and its River job is running,
+// attempted two hours ago by a process that no longer exists. River's
+// rescuer hands the job out again, and the worker closes the interrupted
+// attempt as an error and carries out the next attempt.
 func TestRunCaughtMidAttemptByACrashIsRetriedAfterRestart(t *testing.T) {
 	e := newEnv(t)
 	runID := queueBeforeRestart(t, e, map[string]any{"data": map[string]any{"course_id": 42}})
@@ -255,20 +248,13 @@ func TestRunCaughtMidAttemptByACrashIsRetriedAfterRestart(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 	}
 	r := p.run(t, runID)
-	if r.state == "succeeded" && p.hits.Load() == 1 {
-		return // the crashed attempt was retried: PX-RUN-05 holds
-	}
-
-	// Not retried. Confirm it is the known gap and nothing else.
 	var openAttempts int
 	p.pool.QueryRow(ctx, `SELECT count(*) FROM attempt WHERE run_id = $1 AND ended_at IS NULL`, runID).Scan(&openAttempts)
-	t.Logf("after restart: run state %s, attempts %d, data kept %v; River job %s (attempt %d), open attempts %d, system calls %d",
-		r.state, r.attempts, r.hasData, riverState, riverAttempt, openAttempts, p.hits.Load())
-	if r.state != "running" || riverState != "completed" || riverAttempt != 2 || p.hits.Load() != 0 || !r.hasData || openAttempts != 1 {
-		t.Fatalf("unexpected state after restart: run %+v, River job %s attempt %d, open attempts %d, calls %d",
-			r, riverState, riverAttempt, openAttempts, p.hits.Load())
+	var first string
+	p.pool.QueryRow(ctx, `SELECT outcome || ': ' || error FROM attempt WHERE run_id = $1 AND number = 1`, runID).Scan(&first)
+	if r.state != "succeeded" || r.attempts != 2 || r.hasData || r.finished == nil || p.hits.Load() != 1 ||
+		riverState != "completed" || openAttempts != 0 || first != "error: interrupted: PARADOX stopped during the attempt" {
+		t.Fatalf("after restart: run %+v, River job %s (attempt %d), open attempts %d, first attempt %q, system calls %d",
+			r, riverState, riverAttempt, openAttempts, first, p.hits.Load())
 	}
-	t.Skip("known gap (PX-RUN-05, shutdown story): River rescued the stuck job and retried it, " +
-		"but the worker skips runs that are not queued, so River completed its job without calling the system " +
-		"and the run is left running for ever with its data kept")
 }
