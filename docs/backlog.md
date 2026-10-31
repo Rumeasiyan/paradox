@@ -83,10 +83,10 @@ Tracked in #4.
 |---|---|---|---|---|---|---|---|
 | 18 | [x] | Solo | E-JOB-01 | Queue API: accept a system's own job, data and start-time limits | PX-JOB-01, PX-JOB-02; HW B1, HW B4, HW B5 | Must | 7, 16 |
 | 19 | [x] | Solo | E-SIG-02 | Signature and ownership checks on every queue request | PX-SIG-02, PX-SIG-03, PX-SIG-04, PX-SIG-05, PX-NFR-06; HW B2, HW B3 | Must | 18 |
-| 20 | [ ] | Wave 2 | E-JOB-02 | Repeated request ID returns the first run | PX-JOB-03 | Must | 19 |
-| 21 | [ ] | Wave 2 | E-JOB-03 | Job status for the owning system | PX-JOB-04 | Must | 19 |
-| 22 | [ ] | Wave 2 | E-JOB-04 | Cancel a queued job | PX-JOB-05 | Must | 19 |
-| 23 | [ ] | Wave 2 | E-JOB-05 | Queued jobs survive a restart | PX-JOB-06 | Must | 19 |
+| 20 | [x] | Wave 2 | E-JOB-02 | Repeated request ID returns the first run | PX-JOB-03 | Must | 19 |
+| 21 | [x] | Wave 2 | E-JOB-03 | Job status for the owning system | PX-JOB-04 | Must | 19 |
+| 22 | [x] | Wave 2 | E-JOB-04 | Cancel a queued job | PX-JOB-05 | Must | 19 |
+| 23 | [x] | Wave 2 | E-JOB-05 | Queued jobs survive a restart | PX-JOB-06 | Must | 19 |
 | 24 | [ ] | Solo | E-CON-04 | Test client command `paradox enqueue`: queue, read and cancel as a given system | PX-CON-03, PX-JOB-01, PX-JOB-04, PX-JOB-05 | Must | 21, 22 |
 
 Notes:
@@ -111,6 +111,7 @@ Tracked in #4 and #5.
 | 33 | [ ] | Solo | E-ENB-05 | Security check: only the queue path served, nothing secret logged, runs as non-root on a read-only root | PX-NFR-05, PX-NFR-06 | Must | 19, 29 |
 
 Notes:
+- **E-RUN-04:** also fixes #8: a run caught mid-attempt by a crash must be closed and retried (or failed and reported), and River's stuck-job rescue set to the job's own limit; un-skip `TestRunCaughtMidAttemptByACrashIsRetriedAfterRestart`.
 - **E-SCH-03:** a missed run and a skipped run are both recorded (Annex A `run.state`) so the operator can see them.
 - **E-REC-02:** `queue_request` rows go after 24 hours; story 20 relies on them until then.
 - **E-ENB-04:** generate the load with many test systems and queued jobs; measure memory under the 250 MB limit with the Go memory limit set.

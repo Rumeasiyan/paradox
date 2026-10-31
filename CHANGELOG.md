@@ -2,6 +2,13 @@
 
 All notable changes to PARADOX. The version is in `VERSION`; it follows semantic versioning and changes with every completed change that alters behaviour (see `AGENTS.md`, Versioning).
 
+## 0.8.0
+
+- A repeated `request_id` from the same system within `PARADOX_REQUEST_ID_KEEP` returns the first run with `"repeat": true` and queues nothing; simultaneous repeats are handled one at a time.
+- `GET /api/jobs/{run_id}` reads the caller's own run (403 for another system's, 404 if unknown).
+- `POST /api/jobs/{run_id}/cancel` cancels the caller's queued run, wipes its data, records the action and cancels its River job; 409 if it is no longer queued.
+- Known gap, issue #8: a run caught mid-attempt by a crash is not yet retried.
+
 ## 0.7.0
 
 - Queue API on `PARADOX_LISTEN`: `POST /api/jobs` queues one of the calling system's own jobs, with data up to `PARADOX_MAX_DATA_BYTES` and an optional `run_at` up to `PARADOX_MAX_AHEAD` ahead (contract section 6).
