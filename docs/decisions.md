@@ -8,6 +8,12 @@ Format: date, title, **Decision**, **Why** (including what was rejected and the 
 
 ---
 
+## 2026-10-31: PARADOX refuses to start with an empty systems folder
+
+**Decision:** `paradox serve` keeps refusing to start when the systems folder holds no systems. A deployment keeps the stand-in test system until a real system with jobs joins, and fills the folder before it starts PARADOX.
+
+**Why:** an empty folder usually means the folder failed to mount, and a PARADOX with nothing to do would fail silently. Rejected: starting with only a warning (a missing mount would show only in the log), and a setting that allows an empty folder (not needed yet; revisit if a deployment must run with no systems). Found on the first server deployment (#10).
+
 ## 2026-10-31: Go-live rehearsal passed against real Sablier and Uptime Kuma
 
 **Decision:** `dev/e2e/run.sh` is the go-live rehearsal: the image as built, read-only under 250 MB, against Sablier 1.19.1, Uptime Kuma 1 and PostgreSQL behind PgBouncer (session, pool 2), with `paradox testsystem` as a sleeping system. It passed, and the contract now requires Sablier 1.19 or later.
