@@ -16,6 +16,7 @@ Status: design is frozen (PRD v1.1); no Go code exists yet. Work is planned as G
 | `docs/how-it-works.md` | The two main flows (scheduled job, queued job) step by step, the draft schedule file, who holds which key. |
 | `docs/diagrams/paradox-architecture.dot` | Reference architecture (PRD Annex B). Link numbers must match the Annex B table. |
 | `docs/diagrams/build_erd.py` | The data model (PRD Annex A): entities and links in one script that draws `paradox-erd.svg` and writes the PRD data dictionary. Edit the script, never the generated files. |
+| `docs/backlog.md` | Build order: numbered stories with Run mode (Solo, Wave, With you), citations and Needs. Build top to bottom; tick Done in the same commit. |
 | `docs/decisions.md` | Why things are the way they are. Read before reversing anything. |
 | `CHANGELOG.md`, `VERSION` | Release history and the one version number. |
 | `CONTRIBUTING.md`, `SECURITY.md` | Contribution rules (DCO) and private vulnerability reporting. |
@@ -80,7 +81,7 @@ The contract and signing helper are imported by other repositories and will carr
 
 ## Workflow
 
-1. Find the open issue for the work, or open one with the form; assign it to `Rumeasiyan` and label it.
+1. Take the next unticked story in `docs/backlog.md` (or the task you were given). Find its issue, or open one with the form; assign it to `Rumeasiyan` and label it.
 2. Read the PRD rows it touches and any related entry in `docs/decisions.md`.
 3. If the work needs a choice that belongs to the owner, ask and record the answer in the issue before building.
 4. Make the change with tests. Update the PRD, `how-it-works.md` and diagrams if behaviour or architecture changed.
