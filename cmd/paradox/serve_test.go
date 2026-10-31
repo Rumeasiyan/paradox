@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -77,7 +78,11 @@ func TestServeRunsADueJobEndToEnd(t *testing.T) {
 	os.WriteFile(filepath.Join(dir, "localhost", "schedules.yaml"), []byte("system: localhost\nwake: none\njobs:\n  - name: ping\n    every: \"0 7 * * *\"\n    retries: 0\n"), 0o644)
 	os.WriteFile(filepath.Join(dir, "localhost", "system.pub"), []byte(sysPub+"\n"), 0o644)
 
+	freeLn, _ := net.Listen("tcp", "127.0.0.1:0")
+	adminAddr := freeLn.Addr().String()
+	freeLn.Close()
 	env := map[string]string{
+		"PARADOX_ADMIN_LISTEN": adminAddr,
 		"PARADOX_SYSTEMS_DIR":  dir,
 		"PARADOX_DATABASE_URL": dbURL,
 		"PARADOX_PRIVATE_KEY":  privText,
@@ -148,6 +153,12 @@ func TestServeRunsADueJobEndToEnd(t *testing.T) {
 			t.Fatalf("queued run state %q (%v)\n%s", state, err, logs.String())
 		}
 		time.Sleep(100 * time.Millisecond)
+	}
+
+	// The operator sees both runs through the loopback admin endpoint.
+	code, out, errOut = runArgs(t, envFrom(env), "runs", "-json")
+	if code != 0 || strings.Count(out, `"state": "succeeded"`) != 2 {
+		t.Fatalf("paradox runs: exit %d out %s err %s", code, out, errOut)
 	}
 
 	cancel()

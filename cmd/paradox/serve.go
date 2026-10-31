@@ -18,6 +18,7 @@ import (
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 
 	"github.com/Rumeasiyan/paradox"
+	"github.com/Rumeasiyan/paradox/internal/admin"
 	"github.com/Rumeasiyan/paradox/internal/api"
 	"github.com/Rumeasiyan/paradox/internal/config"
 	"github.com/Rumeasiyan/paradox/internal/db"
@@ -143,6 +144,17 @@ func serve(ctx context.Context, stderr io.Writer, getenv func(string) string, re
 	serveErr := make(chan error, 1)
 	go func() { serveErr <- srv.Serve(ln) }()
 
+	// The operator endpoint answers only on loopback (config refuses any
+	// other address), with the service's own connections.
+	adminLn, err := net.Listen("tcp", cfg.AdminListen)
+	if err != nil {
+		srv.Close()
+		stopRiver(rc, cfg.ShutdownGrace)
+		return fmt.Errorf("PARADOX_ADMIN_LISTEN %s: %w", cfg.AdminListen, err)
+	}
+	adminSrv := &http.Server{Handler: (&admin.Admin{Pool: pool, Logger: logger}).Handler(), ReadHeaderTimeout: 10 * time.Second}
+	go adminSrv.Serve(adminLn)
+
 	sched := &runner.Scheduler{D: deps, River: rc}
 	go sched.Run(ctx, tickEvery)
 	go reporting.HeartbeatLoop(ctx, reporter, cfg.HeartbeatEvery, logger)
@@ -163,6 +175,7 @@ func serve(ctx context.Context, stderr io.Writer, getenv func(string) string, re
 	shut, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	srv.Shutdown(shut)
+	adminSrv.Shutdown(shut)
 	stopRiver(rc, cfg.ShutdownGrace)
 	return nil
 }

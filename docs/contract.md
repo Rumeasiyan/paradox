@@ -188,6 +188,7 @@ PARADOX is configured only by environment variables and the systems folder (PX-N
 | `PARADOX_SYSTEMS_DIR` | `./systems` | The systems folder (section 1). |
 | `PARADOX_TIMEZONE` | `UTC` | IANA timezone that schedule times are read in (PX-SCH-03). |
 | `PARADOX_LISTEN` | `:8080` | Address PARADOX's API listens on. |
+| `PARADOX_ADMIN_LISTEN` | `127.0.0.1:8081` | Loopback-only address for the operator commands (`paradox runs`, retry, cancel) inside the container. Any other address is refused. Added after 0.1.0. |
 | `PARADOX_DATABASE_URL` | `postgres://paradox@localhost:5432/paradox` | PostgreSQL connection URL. |
 | `PARADOX_PRIVATE_KEY` | none, required | PARADOX's private key (section 3). |
 | `PARADOX_SYSTEM_PORT` | `8080` | Port PARADOX calls systems on when they have no `address` (PX-SYS-04). |

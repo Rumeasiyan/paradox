@@ -8,6 +8,16 @@ Format: date, title, **Decision**, **Why** (including what was rejected and the 
 
 ---
 
+## 2026-10-31: Operator commands go through a loopback admin endpoint
+
+**Decision:** Operator commands (`paradox runs`, and retry and cancel) do not open their own database connection. They call the running service on a loopback-only address, `PARADOX_ADMIN_LISTEN` (default `127.0.0.1:8081`), and the service answers with its own connections. Any non-loopback address is refused at start. The endpoint has no signature check: only someone already inside the container can reach it.
+
+**Why:** PARADOX holds both of PgBouncer's session connections, so a command connecting through the same entry would wait forever (the same trap recorded under "One PARADOX process per connection pool"). Rejected: a second database URL for the command (another credential to manage, and a way around the pool rule), and putting the operator routes on the API port behind signatures (the API port is reachable from other containers, and an operator has no system key). Loopback keeps the queue path the only one reachable from outside (PX-NFR-05).
+
+**Consequences:** Operator commands work only while `paradox serve` runs in the same container, and say so when it does not. Contract: one new setting, added after 0.1.0 (non-breaking).
+
+**Refs:** `internal/admin`, `cmd/paradox/runs.go`, PX-REC-03, PX-REC-04
+
 ## 2026-10-31: One PARADOX process per connection pool; stop before start
 
 **Decision:** Only one PARADOX process may use its PgBouncer pool at a time. A deployment stops the old process before starting the new one (Compose's default recreate), and nothing else connects through PARADOX's pool entry. If the database does not answer within 30 seconds at start, PARADOX exits with a message naming this as the likely cause.

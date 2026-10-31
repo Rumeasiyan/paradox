@@ -2,6 +2,11 @@
 
 All notable changes to PARADOX. The version is in `VERSION`; it follows semantic versioning and changes with every completed change that alters behaviour (see `AGENTS.md`, Versioning).
 
+## 0.10.0
+
+- `paradox runs` lists runs for the operator, newest first, filtered by system, job, state (or `-failed`) and how far back (`-since`, default 24 hours); `-json` for scripts. Never shows job data.
+- New setting `PARADOX_ADMIN_LISTEN` (default `127.0.0.1:8081`): the loopback-only endpoint operator commands talk to. Any non-loopback address is refused at start.
+
 ## 0.9.0
 
 - `paradox enqueue` calls the queue API as a given system, signed with that system's private key file: queue a job (`-job`, optional `-data`, `-run-at`, `-request-id`), read a run (`-read`) or cancel one (`-cancel`). It prints PARADOX's answer and exits 0 on success, 1 on a refusal, 2 on wrong usage.

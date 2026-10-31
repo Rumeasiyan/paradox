@@ -28,6 +28,7 @@ func TestDefaultsMatchThePRD(t *testing.T) {
 		{"systems dir", c.SystemsDir, "./systems"},
 		{"timezone", c.Timezone.String(), "UTC"},
 		{"listen", c.Listen, ":8080"},
+		{"admin listen", c.AdminListen, "127.0.0.1:8081"},
 		{"system port (PX-SYS-04)", c.SystemPort, 8080},
 		{"heartbeat (PX-REP-03)", c.HeartbeatEvery, 60 * time.Second},
 		{"signature window (PX-SIG-03)", c.SignatureWindow, 5 * time.Minute},
@@ -110,5 +111,19 @@ func TestErrorsNeverEchoURLs(t *testing.T) {
 	_, err := Load(env("PARADOX_DATABASE_URL", "mysql://user:s3cret@db/x"))
 	if err == nil || strings.Contains(err.Error(), "s3cret") {
 		t.Fatalf("got %v, want an error without the password", err)
+	}
+}
+
+func TestAdminListenMustBeLoopback(t *testing.T) {
+	for _, ok := range []string{"127.0.0.1:9000", "[::1]:9000", "localhost:9000"} {
+		if _, err := Load(env("PARADOX_ADMIN_LISTEN", ok)); err != nil {
+			t.Errorf("%s refused: %v", ok, err)
+		}
+	}
+	for _, bad := range []string{":8081", "0.0.0.0:8081", "10.0.0.5:8081", "127.0.0.1", "127.0.0.1:0"} {
+		_, err := Load(env("PARADOX_ADMIN_LISTEN", bad))
+		if err == nil || !strings.Contains(err.Error(), "PARADOX_ADMIN_LISTEN") {
+			t.Errorf("%s accepted: %v", bad, err)
+		}
 	}
 }

@@ -9,6 +9,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"net"
 	"net/url"
 	"strconv"
 	"strings"
@@ -20,6 +21,7 @@ type Config struct {
 	SystemsDir   string         // PARADOX_SYSTEMS_DIR
 	Timezone     *time.Location // PARADOX_TIMEZONE
 	Listen       string         // PARADOX_LISTEN
+	AdminListen  string         // PARADOX_ADMIN_LISTEN; loopback only
 	DatabaseURL  string         // PARADOX_DATABASE_URL
 	PrivateKey   string         // PARADOX_PRIVATE_KEY (format checked by the signing helper)
 	SystemPort   int            // PARADOX_SYSTEM_PORT
@@ -48,6 +50,7 @@ var Defaults = map[string]string{
 	"PARADOX_SYSTEMS_DIR":      "./systems",
 	"PARADOX_TIMEZONE":         "UTC",
 	"PARADOX_LISTEN":           ":8080",
+	"PARADOX_ADMIN_LISTEN":     "127.0.0.1:8081",
 	"PARADOX_DATABASE_URL":     "postgres://paradox@localhost:5432/paradox",
 	"PARADOX_PRIVATE_KEY":      "",
 	"PARADOX_SYSTEM_PORT":      "8080",
@@ -78,6 +81,7 @@ func Load(getenv func(string) string) (Config, error) {
 	c := Config{
 		SystemsDir:   r.str("PARADOX_SYSTEMS_DIR"),
 		Listen:       r.str("PARADOX_LISTEN"),
+		AdminListen:  r.loopback("PARADOX_ADMIN_LISTEN"),
 		DatabaseURL:  r.url("PARADOX_DATABASE_URL", "postgres", "postgresql"),
 		PrivateKey:   r.str("PARADOX_PRIVATE_KEY"),
 		SystemPort:   r.intIn("PARADOX_SYSTEM_PORT", 1, 65535),
@@ -128,6 +132,22 @@ func (r *reader) fail(name, msg string) {
 }
 
 func (r *reader) str(name string) string { return r.raw(name) }
+
+// loopback accepts only a loopback host:port: the admin endpoint must never
+// be reachable from outside the container (PX-NFR-05).
+func (r *reader) loopback(name string) string {
+	v := r.raw(name)
+	host, port, err := net.SplitHostPort(v)
+	n, perr := strconv.Atoi(port)
+	if err != nil || perr != nil || n < 1 || n > 65535 {
+		r.fail(name, fmt.Sprintf("must be host:port, got %q", v))
+		return v
+	}
+	if ip := net.ParseIP(host); host != "localhost" && (ip == nil || !ip.IsLoopback()) {
+		r.fail(name, fmt.Sprintf("must be a loopback address such as 127.0.0.1:8081, got %q; the admin endpoint is for the operator inside the container only", v))
+	}
+	return v
+}
 
 func (r *reader) intIn(name string, lo, hi int) int {
 	v := r.raw(name)
