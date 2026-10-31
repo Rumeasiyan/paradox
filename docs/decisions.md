@@ -8,6 +8,16 @@ Format: date, title, **Decision**, **Why** (including what was rejected and the 
 
 ---
 
+## 2026-10-31: Data model: six tables, keys in files, River tables outside the model
+
+**Decision:** PARADOX's own data is six tables: `system`, `job`, `queue_request`, `run`, `attempt`, `run_action` (PRD Annex A). A `job` is a named job of a system; a `run` is one execution of it, and the ID the queue API returns is `run.id`. Public keys are not stored in the database; only the fingerprint of the key that signed each queue request is. River's own tables are working state and are not part of the model; each River job carries the `run_id` it executes. A system that leaves the systems folder keeps its row with `removed_at`.
+
+**Why:** Storing public keys as well as reading them from `system.pub` would create two sources that drift; the fingerprint is enough for audit. River deletes finished jobs on its own schedule, so it cannot be the 90-day record or answer a status query; `run` can. The PRD used "job ID" for a queued item and "run" for its record, which would confuse the API and the tables; one execution is now always a `run`, and the contract (#2) names the API field. Deleting a removed system's row would orphan up to 90 days of its runs. Rejected: one table per River job (couples the record to River's internals).
+
+**Consequences:** Retention: `run`, `attempt`, `run_action` 90 days (default); `queue_request` 24 hours. A data model change edits `docs/diagrams/build_erd.py` and re-runs it, which redraws the diagram and rewrites the dictionary in the PRD.
+
+**Refs:** `docs/prd.md` Annex A, `docs/diagrams/build_erd.py`, #2, #4
+
 ## 2026-10-31: Version starts at 0.1.0 and bumps with every completed change
 
 **Decision:** One `VERSION` file is the only version source, starting at `0.1.0`. Every completed change that alters behaviour bumps it by semantic versioning in the same commit, with a `CHANGELOG.md` entry. No separate build number; images are tagged `v<VERSION>`.

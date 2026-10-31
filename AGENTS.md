@@ -15,6 +15,7 @@ Status: design is frozen (PRD v1.1); no Go code exists yet. Work is planned as G
 | `docs/prd.md` | What PARADOX must do. Every behaviour has an ID (`PX-<AREA>-<NN>`); cite IDs in issues, commits and code comments where a rule comes from. |
 | `docs/how-it-works.md` | The two main flows (scheduled job, queued job) step by step, the draft schedule file, who holds which key. |
 | `docs/diagrams/paradox-architecture.dot` | Reference architecture (PRD Annex B). Link numbers must match the Annex B table. |
+| `docs/diagrams/build_erd.py` | The data model (PRD Annex A): entities and links in one script that draws `paradox-erd.svg` and writes the PRD data dictionary. Edit the script, never the generated files. |
 | `docs/decisions.md` | Why things are the way they are. Read before reversing anything. |
 | `CHANGELOG.md`, `VERSION` | Release history and the one version number. |
 | `CONTRIBUTING.md`, `SECURITY.md` | Contribution rules (DCO) and private vulnerability reporting. |
@@ -39,6 +40,7 @@ Status: design is frozen (PRD v1.1); no Go code exists yet. Work is planned as G
 | Task | Command |
 |---|---|
 | Re-render the architecture diagram after editing the `.dot` | `dot -Tsvg docs/diagrams/paradox-architecture.dot -o docs/diagrams/paradox-architecture.svg` |
+| Redraw the data model and rewrite the PRD dictionary | `python3 docs/diagrams/build_erd.py` |
 | Read the version | `cat VERSION` |
 | Go checks (once `go.mod` exists; Go 1.27) | `gofmt -l .`, `go vet ./...`, `go test ./...` |
 
@@ -47,7 +49,7 @@ Status: design is frozen (PRD v1.1); no Go code exists yet. Work is planned as G
 - **Commits:** `Area: summary` (for example `Docs: ...`, `Legal: ...`), body explains why. Signed off with `git commit -s` (DCO). Reference the issue (`Refs #N` or `Closes #N`). Commits carry only the human author: no AI co-author trailers or "generated with" lines.
 - **Branching:** work lands directly on `main` and is pushed. Outside contributors use pull requests (`CONTRIBUTING.md`).
 - **Writing:** plain British English, short sentences, they/them for people. No em dashes anywhere; use a comma, colon, full stop or parentheses.
-- **Docs move with behaviour:** a change to behaviour updates the PRD row and, if a flow changes, `docs/how-it-works.md` in the same commit. A changed link in the architecture updates the `.dot`, the `.svg` and the Annex B table together.
+- **Docs move with behaviour:** a change to behaviour updates the PRD row and, if a flow changes, `docs/how-it-works.md` in the same commit. A changed link in the architecture updates the `.dot`, the `.svg` and the Annex B table together. A data model change goes through `build_erd.py`.
 - **Diagrams:** Graphviz `.dot` for architecture, Mermaid in Markdown for flows (GitHub renders it). In Mermaid labels avoid double quotes, apostrophes and semicolons; they break the parser.
 
 ## Versioning

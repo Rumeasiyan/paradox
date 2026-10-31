@@ -143,9 +143,47 @@ A system is known to PARADOX only through its schedule file and public key (PX-S
 | Settings | Environment variables and one read-only systems folder |
 | Build and release | GitHub Actions `image.yml`, image pinned by tag in the deployment repository |
 
+<div class="a3">
+
 ## Annex A: Entity relationship diagram
 
-To be produced with the companion prompt.
+Boxes show each entity's keys; the other fields are in A.2. Lines point from a table up to the table it refers to (crow's foot: many; bar: one; dashed: optional). Every link is drawn. The queue's own working tables (River) are not part of this model: each queued River job carries the `run_id` it executes, and `run` is the lasting record. Public keys are not stored; they are read from each system's `system.pub` at start.
+
+<img src="diagrams/paradox-erd.svg" alt="PARADOX data model: system has many jobs; a job has many runs; a run has many attempts and many run actions; a queue request belongs to a system and creates one run; a run action may name the system that cancelled it.">
+
+</div>
+
+### A.2 Data dictionary
+
+<!-- dictionary:start -->
+
+#### Systems
+
+| Entity | Fields |
+|---|---|
+| `system` | `name`: text, unique; the system's folder name<br>`wake_mode`: sablier or none (default: sablier)<br>`address`: text, optional; only for systems off the internal network<br>`first_seen_at`: timestamp (UTC)<br>`removed_at`: timestamp (UTC), optional; set when the folder disappears, so old runs still resolve |
+| `job` | `name`: text, unique per system<br>`repeat`: repeating time to the minute, optional; none means the job is only queued<br>`timeout_s`: seconds (default: 600)<br>`retries`: number (default: 3, so 4 attempts)<br>`next_due_at`: timestamp (UTC), optional<br>`last_due_at`: timestamp (UTC), optional; used to catch up a missed job |
+
+#### Intake
+
+| Entity | Fields |
+|---|---|
+| `queue_request` | `received_at`: timestamp (UTC)<br>`key_fingerprint`: text; which of the system's public keys signed it<br>*Deleted after 24 hours (default). Public keys themselves are not stored; the system.pub files are the source.* |
+
+#### Runs
+
+| Entity | Fields |
+|---|---|
+| `run` | `source`: schedule or queue<br>`data`: job data, max 64 KB (default); wiped when the run ends<br>`due_at`: timestamp (UTC)<br>`state`: queued, running, succeeded, failed, cancelled, skipped or missed<br>`max_attempts`: number (retries + 1)<br>`attempts`: number (0 to max_attempts)<br>`started_at`: timestamp (UTC), optional<br>`finished_at`: timestamp (UTC), optional<br>`last_error`: text, max 2 KB, optional<br>`reported_at`: timestamp (UTC), optional; when the failure report was sent<br>*Deleted after 90 days (default). The ID the queue API returns is run.id.* |
+| `attempt` | `number`: number (1 to max_attempts)<br>`started_at`: timestamp (UTC)<br>`ended_at`: timestamp (UTC), optional<br>`outcome`: success, error, timeout or wake_timeout<br>`status_code`: number, optional; the system's answer<br>`error`: text, max 2 KB, optional<br>*Deleted with its run.* |
+
+#### Operation
+
+| Entity | Fields |
+|---|---|
+| `run_action` | `action`: retry or cancel<br>`acted_at`: timestamp (UTC)<br>*by_system_id is empty when the operator acted from the command line. Deleted with its run.* |
+
+<!-- dictionary:end -->
 
 <div class="land">
 
