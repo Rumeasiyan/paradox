@@ -127,7 +127,7 @@ Tracked in #6 and #7.
 | 35 | [x] | Wave 4 | E-ENB-07 | Push monitor adapter for the reporter | PX-REP-02, PX-REP-03; AB 10 | Must | 13 |
 | 36 | [x] | Solo | E-ENB-08 | CI checks and image workflow, image tagged from `VERSION` | PX-NFR-05, PX-REP-04 | Must | 33 |
 | 37 | [x] | Solo | E-ENB-09 | End-to-end stack with real Sablier, monitor and PgBouncer | HW A1 to A15, HW B1 to B5, PX-NFR-02 | Must | 32, 34, 35, 36 |
-| 38 | [ ] | With you | E-ENB-10 | Publish the first image | PX-NFR-05 | Must | 37 |
+| 38 | [x] | With you | E-ENB-10 | Publish the first image | PX-NFR-05 | Must | 37 |
 | 39 | [ ] | With you | E-ENB-11 | On the server: deploy, roll back, redeploy, restart after a crash | PX-NFR-03 | Must | 38 |
 | 40 | [ ] | With you | E-ENB-12 | On the server: database in the nightly backup, restore test passes | PX-NFR-04 | Must | 39 |
 | 41 | [ ] | With you | E-ENB-13 | On the server: an outside system queues and runs a job through the proxy | PX-SYS-03, PX-SYS-04; AB 4, AB 9 | Should | 39 |

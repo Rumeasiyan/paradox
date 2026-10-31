@@ -4,6 +4,8 @@ All notable changes to PARADOX. The version is in `VERSION`; it follows semantic
 
 ## 0.13.0
 
+First published image: `ghcr.io/rumeasiyan/paradox:v0.13.0`. Speaks contract 0.2.0 (`sign/v0.2.0`, see `docs/contract.md`).
+
 - Real waker: with `PARADOX_SABLIER_URL` set, systems with `wake: sablier` are woken through Sablier's blocking strategy, using a group named after the system, and kept awake by renewing the session (`PARADOX_KEEP_AWAKE_EVERY` plus `PARADOX_WAKE_TIMEOUT`).
 - Real monitor: `PARADOX_HEARTBEAT_URL` and `PARADOX_FAILURE_URL` take Uptime Kuma-style push URLs. Heartbeats push `up`; a run that fails every attempt pushes `down` with a one-line message; the next heartbeat clears it. URLs and their tokens never appear in logs or errors.
 - `serve` no longer refuses these settings.

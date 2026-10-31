@@ -1,6 +1,6 @@
 # PARADOX contract
 
-Contract version **0.1.0**, tagged `sign/v0.1.0` on 31 October 2026.
+Contract version **0.2.0**, tagged `sign/v0.2.0` on 31 October 2026. Changes from 0.1.0 (`sign/v0.1.0`) are additions only: the settings `PARADOX_ADMIN_LISTEN` and `PARADOX_FAILED_DATA_KEEP`, and the Sablier requirements (group label, version 1.19 or later).
 
 This is what deployments and systems build against: the systems folder, the schedule file, keys, the signing scheme, the calls PARADOX makes to a system, the queue API, and PARADOX's settings. Requirement IDs (`PX-...`) refer to [prd.md](prd.md); the flows are in [how-it-works.md](how-it-works.md).
 
@@ -188,7 +188,7 @@ PARADOX is configured only by environment variables and the systems folder (PX-N
 | `PARADOX_SYSTEMS_DIR` | `./systems` | The systems folder (section 1). |
 | `PARADOX_TIMEZONE` | `UTC` | IANA timezone that schedule times are read in (PX-SCH-03). |
 | `PARADOX_LISTEN` | `:8080` | Address PARADOX's API listens on. |
-| `PARADOX_ADMIN_LISTEN` | `127.0.0.1:8081` | Loopback-only address for the operator commands (`paradox runs`, retry, cancel) inside the container. Any other address is refused. Added after 0.1.0. |
+| `PARADOX_ADMIN_LISTEN` | `127.0.0.1:8081` | Loopback-only address for the operator commands (`paradox runs`, retry, cancel) inside the container. Any other address is refused. Added in 0.2.0. |
 | `PARADOX_DATABASE_URL` | `postgres://paradox@localhost:5432/paradox` | PostgreSQL connection URL. |
 | `PARADOX_PRIVATE_KEY` | none, required | PARADOX's private key (section 3). |
 | `PARADOX_SYSTEM_PORT` | `8080` | Port PARADOX calls systems on when they have no `address` (PX-SYS-04). |
@@ -209,4 +209,4 @@ PARADOX is configured only by environment variables and the systems folder (PX-N
 | `PARADOX_MAX_AHEAD` | `30d` | Furthest `run_at` accepted (PX-JOB-02). |
 | `PARADOX_REQUEST_ID_KEEP` | `24h` | How long a `request_id` is remembered (PX-JOB-03). |
 | `PARADOX_RECORD_KEEP` | `90d` | How long run records are kept (PX-REC-02). |
-| `PARADOX_FAILED_DATA_KEEP` | `7d` | How long a failed run keeps its job data so the operator can retry it; other runs lose their data when they end (PX-REC-02, PX-REC-04). Added after 0.1.0. |
+| `PARADOX_FAILED_DATA_KEEP` | `7d` | How long a failed run keeps its job data so the operator can retry it; other runs lose their data when they end (PX-REC-02, PX-REC-04). Added in 0.2.0. |
