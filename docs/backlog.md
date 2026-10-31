@@ -108,12 +108,13 @@ Tracked in #4 and #5.
 | 30 | [x] | Solo | E-REC-03 | Command line: list runs | PX-REC-03 | Must | 17 |
 | 31 | [x] | Solo | E-REC-04 | Command line: retry and cancel, recorded as run actions | PX-REC-04 | Must | 22, 30 |
 | 32 | [x] | Solo | E-ENB-04 | Capacity and speed check against the stated limits | PX-NFR-01, PX-NFR-02 | Must | 27, 29 |
-| 33 | [ ] | Solo | E-ENB-05 | Security check: only the queue path served, nothing secret logged, runs as non-root on a read-only root | PX-NFR-05, PX-NFR-06 | Must | 19, 29 |
+| 33 | [x] | Solo | E-ENB-05 | Security check: only the queue path served, nothing secret logged, runs as non-root on a read-only root | PX-NFR-05, PX-NFR-06 | Must | 19, 29 |
 
 Notes:
 - **E-RUN-04:** also fixes #8: a run caught mid-attempt by a crash must be closed and retried (or failed and reported), and River's stuck-job rescue set to the job's own limit; un-skip `TestRunCaughtMidAttemptByACrashIsRetriedAfterRestart`.
 - **E-SCH-03:** a missed run and a skipped run are both recorded (Annex A `run.state`) so the operator can see them.
 - **E-REC-02:** `queue_request` rows go after 24 hours; story 20 relies on them until then.
+- **E-ENB-06 (security):** running as non-root on a read-only root file system is a property of the image, so story 36 checks it.
 - **E-ENB-04:** generate the load with many test systems and queued jobs; measure memory under the 250 MB limit with the Go memory limit set.
 
 ## R5 Go live

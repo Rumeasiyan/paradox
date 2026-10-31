@@ -2,6 +2,8 @@ module github.com/Rumeasiyan/paradox
 
 go 1.27.1
 
+toolchain go1.27.3
+
 require (
 	github.com/Rumeasiyan/paradox/sign v0.0.0
 	github.com/jackc/pgx/v5 v5.12.0

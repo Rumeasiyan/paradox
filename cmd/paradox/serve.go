@@ -136,7 +136,15 @@ func serve(ctx context.Context, stderr io.Writer, getenv func(string) string, re
 	mux.Handle(health.Path, health.Handler(health.DBCheck(pool), logger))
 	mux.Handle(api.Prefix, queueAPI)
 	mux.Handle(api.Prefix+"/", queueAPI)
-	srv := &http.Server{Handler: mux, ReadHeaderTimeout: 10 * time.Second}
+	// Timeouts so a slow or stalled client cannot hold connections open.
+	srv := &http.Server{
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       2 * time.Minute,
+		MaxHeaderBytes:    16 << 10,
+	}
 	ln, err := net.Listen("tcp", cfg.Listen)
 	if err != nil {
 		stopRiver(rc, cfg.ShutdownGrace, logger)

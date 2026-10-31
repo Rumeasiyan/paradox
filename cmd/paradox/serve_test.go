@@ -116,6 +116,18 @@ func TestServeRunsADueJobEndToEnd(t *testing.T) {
 	if resp.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("unsigned queue request: %d, want 401", resp.StatusCode)
 	}
+	// Only /healthz and /api/jobs are served on the public listener; the
+	// operator routes live on loopback only (PX-NFR-05).
+	for _, path := range []string{"/", "/admin/runs", "/debug/pprof/", "/metrics", "/api", "/healthz/x"} {
+		resp, err := http.Get("http://" + listen + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusNotFound {
+			t.Errorf("public %s answered %d, want 404", path, resp.StatusCode)
+		}
+	}
 
 	// Make ping due now; the scheduler ticks every second.
 	if _, err := pool.Exec(ctx, `UPDATE job SET next_due_at = now() - interval '1 second' WHERE name = 'ping'`); err != nil {
@@ -138,7 +150,7 @@ func TestServeRunsADueJobEndToEnd(t *testing.T) {
 	// (how it works, Flow B).
 	sysKey := filepath.Join(t.TempDir(), "localhost.key")
 	os.WriteFile(sysKey, []byte(sysPriv+"\n"), 0o600)
-	code, out, errOut := runArgs(t, noEnv, "enqueue", "-url", "http://"+listen, "-system", "localhost", "-key", sysKey, "-job", "ping", "-data", `{"n":1}`)
+	code, out, errOut := runArgs(t, noEnv, "enqueue", "-url", "http://"+listen, "-system", "localhost", "-key", sysKey, "-job", "ping", "-data", `{"learner":"secret-marker-7731"}`)
 	if code != 0 || !strings.Contains(out, `"state": "queued"`) {
 		t.Fatalf("enqueue: exit %d out %q err %q", code, out, errOut)
 	}
@@ -174,8 +186,11 @@ func TestServeRunsADueJobEndToEnd(t *testing.T) {
 	if !strings.Contains(out, `"msg":"paradox started"`) || !strings.Contains(out, `"msg":"paradox stopping"`) {
 		t.Fatalf("missing start or stop log:\n%s", out)
 	}
-	if strings.Contains(out, "ed25519-priv:") {
+	if strings.Contains(out, "ed25519-priv:") || strings.Contains(out, strings.TrimPrefix(privText, "ed25519-priv:")) {
 		t.Fatal("private key reached the log")
+	}
+	if strings.Contains(out, "secret-marker-7731") {
+		t.Fatal("job data reached the log (PX-NFR-06)")
 	}
 }
 

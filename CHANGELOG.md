@@ -2,6 +2,12 @@
 
 All notable changes to PARADOX. The version is in `VERSION`; it follows semantic versioning and changes with every completed change that alters behaviour (see `AGENTS.md`, Versioning).
 
+## 0.12.2
+
+- Security: builds now require Go 1.27.3 (`toolchain` in `go.mod`), which fixes ten standard-library vulnerabilities in HTTP/2, `net/http`, TLS and X.509 that `govulncheck` found reachable from PARADOX's code. `govulncheck` now reports none.
+- The public server has read, write and idle timeouts and a 16 KB header limit, so a slow client cannot hold connections open.
+- Tested: the public listener answers only `/healthz` and `/api/jobs`; job data and private keys never reach the log.
+
 ## 0.12.1
 
 - Fixed: every run waited up to 5 extra seconds before starting, because River makes a job given any scheduled time wait for its 5-second maintenance cycle. Runs due now are now handed to River as available at once; future ones are scheduled 5 seconds early and wait out the rest, so they still never start early. Measured on the local stack: worst start delay 1.1 s instead of 5.8 s at 17 times the PRD's load (PX-NFR-02).

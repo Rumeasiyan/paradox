@@ -8,6 +8,16 @@ Format: date, title, **Decision**, **Why** (including what was rejected and the 
 
 ---
 
+## 2026-10-31: Go toolchain pinned to the patched release; govulncheck before release
+
+**Decision:** `go.mod` and `go.work` name `toolchain go1.27.3`, so every build uses at least that patched Go, and `govulncheck ./...` must report nothing before a release or image.
+
+**Why:** The security story's scan found ten standard-library vulnerabilities (HTTP/2, `net/http`, `net/textproto`, TLS, X.509) reachable from PARADOX's code under Go 1.27.1, all fixed in 1.27.3. PARADOX serves HTTP to other containers and, through the proxy, to the internet, so they matter. A toolchain line makes older local Go download the fixed one rather than build with the vulnerable one.
+
+**Consequences:** The image build must use Go 1.27.3 or later. When `govulncheck` reports a new finding, the fix is a toolchain or dependency bump in its own commit.
+
+**Refs:** `go.mod`, `go.work`, PX-NFR-05
+
 ## 2026-10-31: Capacity measured; River jobs handed over available, not scheduled
 
 **Decision:** A run due now or earlier goes to River with no scheduled time, so it is available at once. A future run (`run_at`) is scheduled 5 seconds early, the length of River's job scheduler cycle, and the worker waits until its due time before starting; if PARADOX stops during that wait the job is snoozed, costing no attempt. The capacity test (`PARADOX_LOAD_TEST=1 go test -run TestCapacity ./internal/runner/`) is the check.
