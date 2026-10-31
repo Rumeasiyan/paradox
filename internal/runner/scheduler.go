@@ -17,6 +17,19 @@ import (
 type Scheduler struct {
 	D     *Deps
 	River *river.Client[pgx.Tx]
+	// CatchUp is PARADOX_CATCH_UP: how late a due time may be and still
+	// run (PX-SCH-05). Zero means DefaultCatchUp.
+	CatchUp time.Duration
+}
+
+// DefaultCatchUp is PARADOX_CATCH_UP when Scheduler.CatchUp is zero.
+const DefaultCatchUp = time.Hour
+
+func (s *Scheduler) catchUp() time.Duration {
+	if s.CatchUp > 0 {
+		return s.CatchUp
+	}
+	return DefaultCatchUp
 }
 
 // Enqueue creates a run and its River job in tx, so both exist or neither.
@@ -37,11 +50,23 @@ func Enqueue(ctx context.Context, tx pgx.Tx, rc *river.Client[pgx.Tx], jobID int
 	return runID, err
 }
 
-// Tick creates one run for every repeating job due at or before now, and
-// moves each job's next due time past now. It returns how many runs it
-// created. Rows are locked with SKIP LOCKED, so two PARADOX processes
-// during a redeploy overlap never create the same run twice.
+// Tick handles every repeating job due at or before now and moves each
+// job's next due time past now. Of all a job's due times up to now:
+//
+//   - The most recent one older than now minus CatchUp, if any, is
+//     recorded as one missed run (PX-SCH-05); older ones are not recorded.
+//   - The most recent one within CatchUp, if any, runs once. If the job
+//     still has a run from the schedule queued or running, it is recorded
+//     as skipped instead (PX-SCH-06). Runs queued through the queue API
+//     do not count.
+//
+// Missed and skipped runs are finished at once, with no attempt and no
+// River job. Tick returns how many runs it queued. Rows are locked with
+// SKIP LOCKED, so two PARADOX processes during a redeploy overlap never
+// create the same run twice. All of it happens in one transaction with
+// no slow work inside.
 func (s *Scheduler) Tick(ctx context.Context, now time.Time) (int, error) {
+	cutoff := now.Add(-s.catchUp())
 	created := 0
 	err := pgx.BeginFunc(ctx, s.D.Pool, func(tx pgx.Tx) error {
 		rows, err := tx.Query(ctx, `
@@ -76,25 +101,104 @@ func (s *Scheduler) Tick(ctx context.Context, now time.Time) (int, error) {
 			if err != nil {
 				return fmt.Errorf("job %d: stored repeat %q no longer parses: %w", d.id, d.repeat, err)
 			}
-			if _, err := Enqueue(ctx, tx, s.River, d.id, "schedule", nil, d.at, d.timeoutS, d.retries+1); err != nil {
-				return err
+			loc := s.D.Location
+			maxAttempts := d.retries + 1
+			lastDue := d.at
+
+			// PX-SCH-05: too late to catch up, so one missed run.
+			first := d.at
+			if first.Before(cutoff) {
+				missed := lastSlot(sched, loc, first, func(t time.Time) bool { return t.Before(cutoff) })
+				if err := finishedRun(ctx, tx, d.id, missed, "missed", maxAttempts, now); err != nil {
+					return err
+				}
+				lastDue = missed
+				first = timetable.Next(sched, loc, missed)
 			}
-			// Next due after now, not after the old due time, so a job that
-			// fell behind gets one run rather than one per missed slot.
-			// Catching up and recording missed runs is PX-SCH-05's work.
-			next := timetable.Next(sched, s.D.Location, now)
+
+			// The most recent due time within CatchUp runs once.
+			if !first.IsZero() && !first.After(now) {
+				at := lastSlot(sched, loc, first, func(t time.Time) bool { return !t.After(now) })
+				var busy bool
+				if err := tx.QueryRow(ctx, `
+					SELECT EXISTS (SELECT 1 FROM run
+					WHERE job_id = $1 AND source = 'schedule' AND state IN ('queued', 'running'))`,
+					d.id).Scan(&busy); err != nil {
+					return err
+				}
+				if busy {
+					// PX-SCH-06: a scheduled job never runs twice at once.
+					if err := finishedRun(ctx, tx, d.id, at, "skipped", maxAttempts, now); err != nil {
+						return err
+					}
+				} else {
+					if _, err := Enqueue(ctx, tx, s.River, d.id, "schedule", nil, at, d.timeoutS, maxAttempts); err != nil {
+						return err
+					}
+					created++
+				}
+				lastDue = at
+			}
+
+			// Next due after now, not after the last due time, so a job that
+			// fell behind never gets one run per slot it was down for.
+			next := timetable.Next(sched, loc, now)
 			var nextPtr *time.Time
 			if !next.IsZero() {
 				nextPtr = &next
 			}
-			if _, err := tx.Exec(ctx, `UPDATE job SET last_due_at = $2, next_due_at = $3 WHERE id = $1`, d.id, d.at, nextPtr); err != nil {
+			if _, err := tx.Exec(ctx, `UPDATE job SET last_due_at = $2, next_due_at = $3 WHERE id = $1`, d.id, lastDue, nextPtr); err != nil {
 				return err
 			}
-			created++
 		}
 		return nil
 	})
 	return created, err
+}
+
+// finishedRun records a run from the schedule that ends as it is created
+// (missed or skipped): no attempt and no River job.
+func finishedRun(ctx context.Context, tx pgx.Tx, jobID int64, dueAt time.Time, state string, maxAttempts int, now time.Time) error {
+	_, err := tx.Exec(ctx, `
+		INSERT INTO run (job_id, source, due_at, state, max_attempts, finished_at)
+		VALUES ($1, 'schedule', $2, $3, $4, $5)`,
+		jobID, dueAt, state, maxAttempts, now)
+	return err
+}
+
+// lastSlot returns the latest due time of sched, from first on, for which
+// ok holds. first must be a due time with ok(first) true, and ok must be
+// true for every due time up to some point and false for all after it.
+//
+// Walking one due time at a time could take long for a job due every
+// minute after a long outage, so it first jumps ahead in doubling steps
+// while a passing due time lies beyond the step, then halves the step,
+// and walks only the last minute.
+func lastSlot(sched cron.Schedule, loc *time.Location, first time.Time, ok func(time.Time) bool) time.Time {
+	lo := first
+	step := time.Minute
+	grow := true
+	for step >= time.Minute {
+		probe := timetable.Next(sched, loc, lo.Add(step))
+		if !probe.IsZero() && ok(probe) {
+			lo = probe
+			if grow {
+				step *= 2
+			}
+			continue
+		}
+		// No passing due time after lo+step: any later one lies in
+		// (lo, lo+step].
+		grow = false
+		step /= 2
+	}
+	for {
+		n := timetable.Next(sched, loc, lo)
+		if n.IsZero() || !ok(n) {
+			return lo
+		}
+		lo = n
+	}
 }
 
 // Run calls Tick every interval until ctx ends. Errors are logged; the
