@@ -2,6 +2,10 @@
 
 All notable changes to PARADOX. The version is in `VERSION`; it follows semantic versioning and changes with every completed change that alters behaviour (see `AGENTS.md`, Versioning).
 
+## 0.4.0
+
+- `paradox -healthcheck` exits 0 only when the running service answers on `PARADOX_LISTEN` and can reach its database (PX-REP-04); the reason for a failure is logged, never sent.
+
 ## 0.3.0
 
 Speaks contract 0.1.0 (`sign/v0.1.0`, see `docs/contract.md`).
