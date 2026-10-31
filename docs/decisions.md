@@ -8,6 +8,16 @@ Format: date, title, **Decision**, **Why** (including what was rejected and the 
 
 ---
 
+## 2026-10-31: River connection mode: PollOnly over a session pool of 2
+
+**Decision:** PARADOX connects through PgBouncer in session mode with at most 2 connections, and runs River with `PollOnly` (checking for due jobs every second) instead of LISTEN/NOTIFY. It needs only CREATE rights on its own database: no superuser, no extension.
+
+**Why:** River's documentation recommends a direct or session-pooled connection for clients that run jobs, which rules out transaction mode with LISTEN. In session mode a client holds a server connection while open, so PARADOX may open at most the pool's 2. River's listener would hold one of them permanently, leaving one for all job fetching, inserts and API queries. With `PollOnly` both connections do work, and a 1-second poll still starts jobs far inside PX-NFR-02's 5 seconds; leader re-election is slower, which does not matter for one process. It also keeps working if the pool is ever switched to transaction mode. Rejected: LISTEN over the session pool (one working connection), a larger pool (a change for the deployment, with no need shown yet). Checked locally: River 0.50 migrates and runs a job through PgBouncer in session mode with a pool of 2, as a non-superuser role.
+
+**Consequences:** No change for the deployment: the planned session entry with pool 2 stands. Capacity is re-checked under load in the capacity story; if 2 connections are not enough there, the pool size is the first thing to raise. Supersedes the open point in the 2026-10-30 entry.
+
+**Refs:** #3, `internal/db`, `dev/compose.yaml`
+
 ## 2026-10-31: Signing wire format: a fixed RFC 9421 profile, one-line keys
 
 **Decision:** Calls are signed with a fixed profile of HTTP Message Signatures (RFC 9421) and Content-Digest (RFC 9530): label `paradox`, covered components `"@method" "@path" "content-digest"`, parameters `created`, `keyid`, `alg="ed25519"` and `tag`, where the tag is the direction (`paradox-to-system` or `system-to-paradox`). The key ID is `paradox` for PARADOX and the system's name for a system. Keys are one line of text: `ed25519-pub:<base64>` and `ed25519-priv:<base64 seed>`. The helper lives in its own module `sign/`, standard library only.

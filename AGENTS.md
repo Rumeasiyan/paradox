@@ -6,7 +6,7 @@ Guide for AI agents and new contributors. Read it before changing anything. `CLA
 
 PARADOX is a scheduler and job queue for systems that sleep when idle (scaled to zero by Sablier). Systems declare timed jobs in a schedule file or queue one-off jobs; PARADOX wakes the system, calls its job address with a signed request, retries failures, reports what still fails to a push monitor, and records every run. It is a public, generic Apache-2.0 project: one deployment runs it for several systems on a shared Docker server, and its real settings live in that deployment's own private repository, never here.
 
-Status: design is frozen (PRD v1.1); the build follows `docs/backlog.md`.
+Status: design is frozen (PRD v1.2); the build follows `docs/backlog.md`.
 
 ## Where to look
 
@@ -22,6 +22,7 @@ Status: design is frozen (PRD v1.1); the build follows `docs/backlog.md`.
 | `CHANGELOG.md`, `VERSION` | Release history and the one version number. |
 | `CONTRIBUTING.md`, `SECURITY.md` | Contribution rules (DCO) and private vulnerability reporting. |
 | `sign/` | The signing helper, a separate Go module with its own version, imported by systems. Standard library only. Its signature base is pinned by `TestSignatureBaseIsStable`: if that test must change, the contract has a breaking change. |
+| `dev/` | Local stack for development and tests only; its passwords are throwaway. |
 | `brand/` | Logo files and the prompt that generated them (`brand/prompt.txt`). |
 
 ## Constraints
@@ -47,6 +48,7 @@ Status: design is frozen (PRD v1.1); the build follows `docs/backlog.md`.
 | Read the version | `cat VERSION` |
 | Go checks (Go 1.27; `go.work` joins the service and the `sign` module) | `gofmt -l .` (must print nothing), `go vet ./... ./sign/...`, `go test ./... ./sign/...` |
 | Run the command | `go run ./cmd/paradox -version` |
+| Local database for tests (PostgreSQL + PgBouncer, session pool of 2, non-superuser role) | `docker compose -f dev/compose.yaml up -d`, then `export PARADOX_TEST_DATABASE_URL=postgres://paradox:paradox@localhost:6432/paradox`. Database tests skip without it; run them before marking a database story done. |
 
 ## Conventions
 

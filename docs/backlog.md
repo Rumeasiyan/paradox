@@ -1,6 +1,6 @@
 # PARADOX backlog
 
-Source: [PRD](prd.md) v1.1 (requirement IDs `PX-...`, Annex A data model, Annex B links `AB n`) and [how it works](how-it-works.md) (flow steps `HW A1` to `HW A15`, `HW B1` to `HW B5`). Stories cite these; read them for the detail.
+Source: [PRD](prd.md) v1.2 (requirement IDs `PX-...`, Annex A data model, Annex B links `AB n`) and [how it works](how-it-works.md) (flow steps `HW A1` to `HW A15`, `HW B1` to `HW B5`). Stories cite these; read them for the detail.
 
 ## Definition of done (every story)
 
@@ -58,7 +58,7 @@ Tracked in #4; story 9 answers #3.
 
 | # | Done | Run | ID | Story | Cites | Pri | Needs |
 |---|---|---|---|---|---|---|---|
-| 9 | [ ] | Solo | E-ENB-02 | Local database stack with PgBouncer in session mode; River connected | AB 5, AB 6, PX-NFR-02 | Must | 1 |
+| 9 | [x] | Solo | E-ENB-02 | Local database stack with PgBouncer in session mode; River connected | AB 5, AB 6, PX-NFR-02 | Must | 1 |
 | 10 | [ ] | Solo | E-REC-01 | Database schema and migrations from Annex A | PX-REC-01 | Must | 9 |
 | 11 | [ ] | Wave 1 | E-SCH-02 | Load the timetable on start, times in UTC | PX-SCH-03, PX-SYS-05; HW A1 to A3 | Must | 5, 10 |
 | 12 | [ ] | Wave 1 | E-RUN-01 | Waker interface with a local stand-in | PX-RUN-01, PX-RUN-02; AB 7 | Must | 1 |

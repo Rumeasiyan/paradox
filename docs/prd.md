@@ -2,7 +2,7 @@
 
 The scheduler and job queue for systems that sleep when idle.
 
-Version 1.1 (frozen), 31 October 2026. Owner: Suseenthiran Arulraj Rumeasiyan.
+Version 1.2 (frozen), 31 October 2026. Owner: Suseenthiran Arulraj Rumeasiyan.
 
 ## 1. Overview
 
@@ -135,7 +135,7 @@ A system is known to PARADOX only through its schedule file and public key (PX-S
 | Part | Choice |
 |---|---|
 | Service | Go, one static program in a minimal image, runs as non-root with a read-only root file system |
-| Queue and timetable | River on PostgreSQL. Pool mode to confirm against River's docs: a session-mode pool of 2 (preferred) or polling through the transaction pool |
+| Queue and timetable | River on PostgreSQL, polling every second (no LISTEN) through a session-mode pool of 2 |
 | Data | PostgreSQL through PgBouncer; PARADOX's own database |
 | Waking | Sablier API, blocking strategy, one group per system |
 | Signing | Ed25519 key pairs, HTTP Message Signatures (RFC 9421) format; helper as a separate small Go module |
@@ -200,7 +200,7 @@ Numbers on the diagram match the table below. Amber links are signed calls; dash
 | 3 | Systems folder to PARADOX | Timetable and public keys; PARADOX reads no other folder | Read-only mount |
 | 4 | System to PARADOX (outside systems through the reverse proxy) | Queue a job, signed with the system's private key | HTTP 8080 on the internal network; HTTPS 443 from outside, only `/api/jobs` |
 | 5 | PARADOX to PgBouncer | Timetable, queue, run records | PostgreSQL protocol 6432 |
-| 6 | PgBouncer to Postgres | Same, through a session-mode pool of 2 (to confirm against River's docs) | PostgreSQL protocol 5432 |
+| 6 | PgBouncer to Postgres | Same, through a session-mode pool of 2 | PostgreSQL protocol 5432 |
 | 7 | PARADOX to Sablier | Wake a system and wait until ready; keep it awake while a job runs | HTTP, Sablier API |
 | 8 | Sablier to systems on this server | Start and stop containers | Docker API |
 | 9 | PARADOX to system | Run a job, signed with PARADOX's private key | HTTP 8080 on the internal network; HTTPS to outside systems |
