@@ -28,6 +28,10 @@ import (
 	"github.com/Rumeasiyan/paradox/sign"
 )
 
+// harnessMaxRunning is PARADOX_MAX_RUNNING for harnesses; tests that
+// change it put it back.
+var harnessMaxRunning = 10
+
 // harness is a whole local PARADOX: database, River, the scheduler, the
 // fake waker and the test system standing in for the systems.
 type harness struct {
@@ -127,7 +131,7 @@ func newHarness(t *testing.T, fail []string, slow map[string]time.Duration, d fu
 	}
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &Worker{D: deps})
-	cfg := db.RiverConfig(workers, 10)
+	cfg := db.RiverConfig(workers, harnessMaxRunning)
 	cfg.Logger = slog.New(slog.DiscardHandler)
 	rc, err := river.NewClient(riverpgxv5.New(pool), cfg)
 	if err != nil {

@@ -102,7 +102,7 @@ Tracked in #4 and #5.
 |---|---|---|---|---|---|---|---|
 | 25 | [ ] | Wave 3 | E-SCH-03 | Catch up a missed job after downtime | PX-SCH-05 | Must | 17 |
 | 26 | [ ] | Wave 3 | E-SCH-04 | Never overlap runs of the same scheduled job | PX-SCH-06 | Must | 16 |
-| 27 | [ ] | Wave 3 | E-RUN-03 | Limit how many jobs run at once | PX-RUN-04 | Must | 16 |
+| 27 | [x] | Wave 3 | E-RUN-03 | Limit how many jobs run at once | PX-RUN-04 | Must | 16 |
 | 28 | [ ] | Wave 3 | E-RUN-04 | Clean shutdown; unfinished runs retried after restart | PX-RUN-05 | Must | 17 |
 | 29 | [ ] | Wave 3 | E-REC-02 | Wipe job data at the end; delete old records | PX-REC-02, PX-NFR-06 | Must | 20 |
 | 30 | [ ] | Solo | E-REC-03 | Command line: list runs | PX-REC-03 | Must | 17 |
