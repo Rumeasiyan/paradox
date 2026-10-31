@@ -1,0 +1,61 @@
+name: Work item, question or bug
+description: Anything to build, decide or fix. Must make sense to someone who saw none of the conversation.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **This repository is public.** Do not paste hostnames, domains, server paths, internal URLs, keys, env files, job payloads, personal data or links to private repositories. Describe deployments generically ("the deployment's proxy"). Security problems go to the Security tab, not here.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - Work item (build or change something)
+        - Decision needed
+        - Bug
+        - Open question or risky assumption
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: What this is, in plain words.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+      description: The concrete consequence of ignoring it.
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where it surfaced
+      description: Paths, PRD IDs (PX-...), commits, flows.
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options and recommendation
+      description: For decisions and questions, the realistic options, the recommended one and why. For bugs, steps to reproduce, expected and actual.
+  - type: checkboxes
+    id: touches
+    attributes:
+      label: This touches
+      description: Tick every one that applies, so it gets the extra care AGENTS.md asks for.
+      options:
+        - label: The published contract (schedule file format, queue API, signing scheme). A breaking change needs a new major contract version.
+        - label: Signing, keys or who may call what.
+        - label: Job data or anything that could contain personal data.
+        - label: A deployment setting (a new setting needs a generic default).
+  - type: checkboxes
+    id: public
+    attributes:
+      label: Public check
+      options:
+        - label: This issue contains no server details, keys, payloads, personal data or private links.
+          required: true
