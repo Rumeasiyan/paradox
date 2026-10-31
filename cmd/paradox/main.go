@@ -22,6 +22,8 @@ const usage = `usage:
   paradox -version            print the version
   paradox keygen -out FILE    create a key pair: private half to FILE, public half printed
   paradox pubkey [-in FILE]   print the public half of a private key (default: PARADOX_PRIVATE_KEY)
+  paradox -healthcheck        exit 0 if the running service and its database are healthy
+  paradox testsystem          run the test system that answers /jobs/<name>
 `
 
 // run is main without the process exit, so tests can drive it.
@@ -32,18 +34,24 @@ func run(args []string, stdout, stderr io.Writer, getenv func(string) string) in
 			return report(stderr, keygen(args[1:], stdout, stderr))
 		case "pubkey":
 			return report(stderr, pubkey(args[1:], stdout, stderr, getenv))
+		case "testsystem":
+			return report(stderr, runTestSystem(args[1:], stdout, stderr, getenv))
 		}
 	}
 	fs := flag.NewFlagSet("paradox", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	fs.Usage = func() { fmt.Fprint(stderr, usage) }
 	showVersion := fs.Bool("version", false, "print the version and exit")
+	healthcheck := fs.Bool("healthcheck", false, "exit 0 if the running service and its database are healthy")
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
 	if *showVersion {
 		fmt.Fprintln(stdout, paradox.Version)
 		return 0
+	}
+	if *healthcheck {
+		return report(stderr, runHealthcheck(getenv))
 	}
 	fs.Usage()
 	return 2
