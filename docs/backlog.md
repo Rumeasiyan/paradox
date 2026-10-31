@@ -64,14 +64,14 @@ Tracked in #4; story 9 answers #3.
 | 12 | [ ] | Wave 1 | E-RUN-01 | Waker interface with a local stand-in | PX-RUN-01, PX-RUN-02; AB 7 | Must | 1 |
 | 13 | [ ] | Wave 1 | E-REP-01 | Reporter interface with a log stand-in; heartbeat | PX-REP-02, PX-REP-03; AB 10 | Must | 1 |
 | 14 | [ ] | Wave 1 | E-REP-02 | Health check tied to the database | PX-REP-04 | Must | 10 |
-| 15 | [ ] | Wave 1 | E-ENB-03 | Test system that sleeps and answers `/jobs/<name>` | HW A8, HW A9 | Must | 4 |
+| 15 | [ ] | Wave 1 | E-ENB-03 | Test system command `paradox testsystem` that answers `/jobs/<name>` | HW A8, HW A9 | Must | 4 |
 | 16 | [ ] | Solo | E-RUN-02 | Runner: due job, run, wake, signed call, time limit, record | PX-RUN-01, PX-RUN-02, PX-RUN-03, PX-REC-01; HW A4 to A12 | Must | 11, 12, 15 |
 | 17 | [ ] | Solo | E-REP-03 | Retries with backoff, then one failure report | PX-REP-01, PX-REP-02; HW A13 to A15 | Must | 13, 16 |
 
 Notes:
 - **E-ENB-02:** if River's documentation rules out session mode, switch to polling, record it in the decision log and tell the deployment's maintainers.
 - **E-RUN-01:** the stand-in can be told to answer ready, answer late, or time out, so PX-RUN-01's limit is testable.
-- **E-ENB-03:** the test system can be set to succeed, fail or answer too slowly, and checks PARADOX's signature with the helper.
+- **E-ENB-03:** a subcommand of the same binary, so a deployment can run the PARADOX image as its sleeping test target. It checks PARADOX's signature with the helper (answers 401 if wrong) and can be set per job to succeed, fail or answer too slowly.
 - **E-RUN-02:** each River job carries only the `run_id` (Annex A); job data stays on the run.
 
 ## R3 Queued job
@@ -86,9 +86,11 @@ Tracked in #4.
 | 21 | [ ] | Wave 2 | E-JOB-03 | Job status for the owning system | PX-JOB-04 | Must | 19 |
 | 22 | [ ] | Wave 2 | E-JOB-04 | Cancel a queued job | PX-JOB-05 | Must | 19 |
 | 23 | [ ] | Wave 2 | E-JOB-05 | Queued jobs survive a restart | PX-JOB-06 | Must | 19 |
+| 24 | [ ] | Solo | E-CON-04 | Test client command `paradox enqueue`: queue, read and cancel as a given system | PX-CON-03, PX-JOB-01, PX-JOB-04, PX-JOB-05 | Must | 21, 22 |
 
 Notes:
 - **E-SIG-02:** the refusal log names the system and the reason only, never the job data.
+- **E-CON-04:** signs with a system's private key file, so a deployment can prove a queued job end to end without writing RFC 9421 code.
 - **E-JOB-03, E-JOB-04:** these requests are signed and checked exactly like queueing (story 19); a system asking about another system's run gets "not allowed".
 
 ## R4 Operation
@@ -97,15 +99,15 @@ Tracked in #4 and #5.
 
 | # | Done | Run | ID | Story | Cites | Pri | Needs |
 |---|---|---|---|---|---|---|---|
-| 24 | [ ] | Wave 3 | E-SCH-03 | Catch up a missed job after downtime | PX-SCH-05 | Must | 17 |
-| 25 | [ ] | Wave 3 | E-SCH-04 | Never overlap runs of the same scheduled job | PX-SCH-06 | Must | 16 |
-| 26 | [ ] | Wave 3 | E-RUN-03 | Limit how many jobs run at once | PX-RUN-04 | Must | 16 |
-| 27 | [ ] | Wave 3 | E-RUN-04 | Clean shutdown; unfinished runs retried after restart | PX-RUN-05 | Must | 17 |
-| 28 | [ ] | Wave 3 | E-REC-02 | Wipe job data at the end; delete old records | PX-REC-02, PX-NFR-06 | Must | 20 |
-| 29 | [ ] | Solo | E-REC-03 | Command line: list runs | PX-REC-03 | Must | 17 |
-| 30 | [ ] | Solo | E-REC-04 | Command line: retry and cancel, recorded as run actions | PX-REC-04 | Must | 22, 29 |
-| 31 | [ ] | Solo | E-ENB-04 | Capacity and speed check against the stated limits | PX-NFR-01, PX-NFR-02 | Must | 26, 28 |
-| 32 | [ ] | Solo | E-ENB-05 | Security check: only the queue path served, nothing secret logged, runs as non-root on a read-only root | PX-NFR-05, PX-NFR-06 | Must | 19, 28 |
+| 25 | [ ] | Wave 3 | E-SCH-03 | Catch up a missed job after downtime | PX-SCH-05 | Must | 17 |
+| 26 | [ ] | Wave 3 | E-SCH-04 | Never overlap runs of the same scheduled job | PX-SCH-06 | Must | 16 |
+| 27 | [ ] | Wave 3 | E-RUN-03 | Limit how many jobs run at once | PX-RUN-04 | Must | 16 |
+| 28 | [ ] | Wave 3 | E-RUN-04 | Clean shutdown; unfinished runs retried after restart | PX-RUN-05 | Must | 17 |
+| 29 | [ ] | Wave 3 | E-REC-02 | Wipe job data at the end; delete old records | PX-REC-02, PX-NFR-06 | Must | 20 |
+| 30 | [ ] | Solo | E-REC-03 | Command line: list runs | PX-REC-03 | Must | 17 |
+| 31 | [ ] | Solo | E-REC-04 | Command line: retry and cancel, recorded as run actions | PX-REC-04 | Must | 22, 30 |
+| 32 | [ ] | Solo | E-ENB-04 | Capacity and speed check against the stated limits | PX-NFR-01, PX-NFR-02 | Must | 27, 29 |
+| 33 | [ ] | Solo | E-ENB-05 | Security check: only the queue path served, nothing secret logged, runs as non-root on a read-only root | PX-NFR-05, PX-NFR-06 | Must | 19, 29 |
 
 Notes:
 - **E-SCH-03:** a missed run and a skipped run are both recorded (Annex A `run.state`) so the operator can see them.
@@ -118,14 +120,14 @@ Tracked in #6 and #7.
 
 | # | Done | Run | ID | Story | Cites | Pri | Needs |
 |---|---|---|---|---|---|---|---|
-| 33 | [ ] | Wave 4 | E-ENB-06 | Sablier adapter for the waker | PX-RUN-01, PX-RUN-02; AB 7, AB 8 | Must | 12 |
-| 34 | [ ] | Wave 4 | E-ENB-07 | Push monitor adapter for the reporter | PX-REP-02, PX-REP-03; AB 10 | Must | 13 |
-| 35 | [ ] | Solo | E-ENB-08 | CI checks and image workflow, image tagged from `VERSION` | PX-NFR-05, PX-REP-04 | Must | 32 |
-| 36 | [ ] | Solo | E-ENB-09 | End-to-end stack with real Sablier, monitor and PgBouncer | HW A1 to A15, HW B1 to B5, PX-NFR-02 | Must | 31, 33, 34, 35 |
-| 37 | [ ] | With you | E-ENB-10 | Publish the first image | PX-NFR-05 | Must | 36 |
-| 38 | [ ] | With you | E-ENB-11 | On the server: deploy, roll back, redeploy, restart after a crash | PX-NFR-03 | Must | 37 |
-| 39 | [ ] | With you | E-ENB-12 | On the server: database in the nightly backup, restore test passes | PX-NFR-04 | Must | 38 |
-| 40 | [ ] | With you | E-ENB-13 | On the server: an outside system queues and runs a job through the proxy | PX-SYS-03, PX-SYS-04; AB 4, AB 9 | Should | 38 |
+| 34 | [ ] | Wave 4 | E-ENB-06 | Sablier adapter for the waker | PX-RUN-01, PX-RUN-02; AB 7, AB 8 | Must | 12 |
+| 35 | [ ] | Wave 4 | E-ENB-07 | Push monitor adapter for the reporter | PX-REP-02, PX-REP-03; AB 10 | Must | 13 |
+| 36 | [ ] | Solo | E-ENB-08 | CI checks and image workflow, image tagged from `VERSION` | PX-NFR-05, PX-REP-04 | Must | 33 |
+| 37 | [ ] | Solo | E-ENB-09 | End-to-end stack with real Sablier, monitor and PgBouncer | HW A1 to A15, HW B1 to B5, PX-NFR-02 | Must | 32, 34, 35, 36 |
+| 38 | [ ] | With you | E-ENB-10 | Publish the first image | PX-NFR-05 | Must | 37 |
+| 39 | [ ] | With you | E-ENB-11 | On the server: deploy, roll back, redeploy, restart after a crash | PX-NFR-03 | Must | 38 |
+| 40 | [ ] | With you | E-ENB-12 | On the server: database in the nightly backup, restore test passes | PX-NFR-04 | Must | 39 |
+| 41 | [ ] | With you | E-ENB-13 | On the server: an outside system queues and runs a job through the proxy | PX-SYS-03, PX-SYS-04; AB 4, AB 9 | Should | 39 |
 
 Notes:
 - **E-ENB-06, E-ENB-07:** tested locally against real Sablier and Uptime Kuma containers; the stand-ins from stories 12 and 13 stay for unit tests.
