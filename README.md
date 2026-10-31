@@ -14,6 +14,7 @@ The scheduler and job queue for systems that sleep when idle. Systems declare th
 paradox keygen -out paradox.key        # once: PARADOX's key pair
 paradox serve                          # settings from PARADOX_* variables, see docs/contract.md section 7
 paradox -healthcheck                   # container health check
+paradox enqueue -url URL -system NAME -key FILE -job NAME   # queue a job as a system, see docs/testsystem.md
 ```
 
 **Why the name.** Named after Professor Paradox in *Ben 10*, who is never late, because he is always exactly where he needs to be in time.

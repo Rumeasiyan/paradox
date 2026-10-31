@@ -87,7 +87,7 @@ Tracked in #4.
 | 21 | [x] | Wave 2 | E-JOB-03 | Job status for the owning system | PX-JOB-04 | Must | 19 |
 | 22 | [x] | Wave 2 | E-JOB-04 | Cancel a queued job | PX-JOB-05 | Must | 19 |
 | 23 | [x] | Wave 2 | E-JOB-05 | Queued jobs survive a restart | PX-JOB-06 | Must | 19 |
-| 24 | [ ] | Solo | E-CON-04 | Test client command `paradox enqueue`: queue, read and cancel as a given system | PX-CON-03, PX-JOB-01, PX-JOB-04, PX-JOB-05 | Must | 21, 22 |
+| 24 | [x] | Solo | E-CON-04 | Test client command `paradox enqueue`: queue, read and cancel as a given system | PX-CON-03, PX-JOB-01, PX-JOB-04, PX-JOB-05 | Must | 21, 22 |
 
 Notes:
 - **E-SIG-02:** the refusal log names the system and the reason only, never the job data.

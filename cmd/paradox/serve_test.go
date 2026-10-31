@@ -64,7 +64,7 @@ func TestServeRunsADueJobEndToEnd(t *testing.T) {
 
 	pubText, privText, _ := sign.GenerateKey()
 	pub, _ := sign.ParsePublicKey(pubText)
-	sysPub, _, _ := sign.GenerateKey()
+	sysPub, sysPriv, _ := sign.GenerateKey()
 
 	// The test system plays the part of a system named "localhost", which
 	// PARADOX calls at http://localhost:<PARADOX_SYSTEM_PORT>.
@@ -129,6 +129,27 @@ func TestServeRunsADueJobEndToEnd(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 	}
 
+	// A queued job, sent with paradox enqueue as the system, runs too
+	// (how it works, Flow B).
+	sysKey := filepath.Join(t.TempDir(), "localhost.key")
+	os.WriteFile(sysKey, []byte(sysPriv+"\n"), 0o600)
+	code, out, errOut := runArgs(t, noEnv, "enqueue", "-url", "http://"+listen, "-system", "localhost", "-key", sysKey, "-job", "ping", "-data", `{"n":1}`)
+	if code != 0 || !strings.Contains(out, `"state": "queued"`) {
+		t.Fatalf("enqueue: exit %d out %q err %q", code, out, errOut)
+	}
+	deadline = time.Now().Add(15 * time.Second)
+	for {
+		var state string
+		err := pool.QueryRow(ctx, `SELECT state FROM run WHERE source = 'queue'`).Scan(&state)
+		if err == nil && state == "succeeded" {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("queued run state %q (%v)\n%s", state, err, logs.String())
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
 	cancel()
 	select {
 	case err := <-done:
@@ -138,7 +159,7 @@ func TestServeRunsADueJobEndToEnd(t *testing.T) {
 	case <-time.After(40 * time.Second):
 		t.Fatal("serve did not stop")
 	}
-	out := logs.String()
+	out = logs.String()
 	if !strings.Contains(out, `"msg":"paradox started"`) || !strings.Contains(out, `"msg":"paradox stopping"`) {
 		t.Fatalf("missing start or stop log:\n%s", out)
 	}

@@ -2,6 +2,10 @@
 
 All notable changes to PARADOX. The version is in `VERSION`; it follows semantic versioning and changes with every completed change that alters behaviour (see `AGENTS.md`, Versioning).
 
+## 0.9.0
+
+- `paradox enqueue` calls the queue API as a given system, signed with that system's private key file: queue a job (`-job`, optional `-data`, `-run-at`, `-request-id`), read a run (`-read`) or cancel one (`-cancel`). It prints PARADOX's answer and exits 0 on success, 1 on a refusal, 2 on wrong usage.
+
 ## 0.8.0
 
 - A repeated `request_id` from the same system within `PARADOX_REQUEST_ID_KEEP` returns the first run with `"repeat": true` and queues nothing; simultaneous repeats are handled one at a time.

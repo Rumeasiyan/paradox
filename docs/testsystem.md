@@ -41,3 +41,17 @@ jobs:
 ```
 
 With `TESTSYSTEM_FAIL_JOBS=fail`, a queued `fail` job is tried twice and then reported as failed.
+
+## Queue a test job
+
+`paradox enqueue` sends a signed queue request as the test system, so a deployment can prove a queued job end to end without writing signing code:
+
+```
+paradox enqueue -url http://paradox:8080 -system jobtest -key jobtest.key -job ping
+paradox enqueue -url http://paradox:8080 -system jobtest -key jobtest.key -job fail -request-id fail-1
+paradox enqueue -url http://paradox:8080 -system jobtest -key jobtest.key -read <run_id>
+paradox enqueue -url http://paradox:8080 -system jobtest -key jobtest.key -cancel <run_id>
+```
+
+`-key` is the system's private key file (from `paradox keygen`); its public half is the system's `system.pub`. Without `-request-id` every call queues a new run. The command prints PARADOX's JSON answer and exits 0 on success, 1 when PARADOX refuses (the status and error are printed), and 2 on wrong usage.
+

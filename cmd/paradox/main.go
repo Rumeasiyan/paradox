@@ -26,6 +26,8 @@ const usage = `usage:
   paradox pubkey [-in FILE]   print the public half of a private key (default: PARADOX_PRIVATE_KEY)
   paradox -healthcheck        exit 0 if the running service and its database are healthy
   paradox testsystem          run the test system that answers /jobs/<name>
+  paradox enqueue -url URL -system NAME -key FILE (-job NAME [-data JSON] [-run-at TIME] [-request-id ID] | -read RUN_ID | -cancel RUN_ID)
+                              call the queue API as a system, signed with its private key
 `
 
 // run is main without the process exit, so tests can drive it.
@@ -36,6 +38,8 @@ func run(args []string, stdout, stderr io.Writer, getenv func(string) string) in
 			return report(stderr, keygen(args[1:], stdout, stderr))
 		case "pubkey":
 			return report(stderr, pubkey(args[1:], stdout, stderr, getenv))
+		case "enqueue":
+			return report(stderr, enqueue(args[1:], stdout, stderr))
 		case "serve":
 			return report(stderr, runServe(args[1:], stderr, getenv))
 		case "testsystem":
