@@ -114,7 +114,7 @@ Notes:
 - **E-RUN-04:** also fixes #8: a run caught mid-attempt by a crash must be closed and retried (or failed and reported), and River's stuck-job rescue set to the job's own limit; un-skip `TestRunCaughtMidAttemptByACrashIsRetriedAfterRestart`.
 - **E-SCH-03:** a missed run and a skipped run are both recorded (Annex A `run.state`) so the operator can see them.
 - **E-REC-02:** `queue_request` rows go after 24 hours; story 20 relies on them until then.
-- **E-ENB-06 (security):** running as non-root on a read-only root file system is a property of the image, so story 36 checks it.
+- **E-ENB-05:** running as non-root on a read-only root file system is a property of the image, so story 36 checks it.
 - **E-ENB-04:** generate the load with many test systems and queued jobs; measure memory under the 250 MB limit with the Go memory limit set.
 
 ## R5 Go live
