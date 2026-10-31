@@ -117,3 +117,18 @@ func oneLine(s string, max int) string {
 	}
 	return s
 }
+
+// runAction asks the service to retry or cancel one run (PX-REC-04) and
+// prints the run afterwards.
+func runAction(action string, args []string, stdout, stderr io.Writer, getenv func(string) string) error {
+	if len(args) != 1 || args[0] == "" || strings.HasPrefix(args[0], "-") {
+		fmt.Fprintf(stderr, "usage: paradox %s RUN_ID\n", action)
+		return errUsage
+	}
+	var r admin.Run
+	if err := adminCall(getenv, http.MethodPost, "/admin/runs/"+url.PathEscape(args[0])+"/"+action, &r); err != nil {
+		return err
+	}
+	fmt.Fprintf(stdout, "%s %s/%s: now %s (attempts so far %d)\n", r.RunID, r.System, r.Job, r.State, r.Attempts)
+	return nil
+}

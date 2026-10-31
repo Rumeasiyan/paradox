@@ -252,7 +252,7 @@ func (w *Worker) start(ctx context.Context, job *river.Job[RunArgs]) (r run, nex
 			if r.attempt >= r.maxAttempts {
 				// The job data is wiped as soon as the run ends (PX-REC-02).
 				if _, err := tx.Exec(ctx, `
-					UPDATE run SET state = 'failed', finished_at = $2, data = NULL, last_error = $3 WHERE id = $1`,
+					UPDATE run SET state = 'failed', finished_at = $2, last_error = $3 WHERE id = $1`,
 					runID, now, errInterruptedByCrash); err != nil {
 					return err
 				}
@@ -369,7 +369,7 @@ func (w *Worker) finish(ctx context.Context, r run, out outcome) (final bool, er
 				UPDATE run SET state = 'succeeded', finished_at = $2, data = NULL WHERE id = $1`, r.id, now)
 		case final:
 			_, err = tx.Exec(ctx, `
-				UPDATE run SET state = 'failed', finished_at = $2, data = NULL, last_error = $3 WHERE id = $1`, r.id, now, msg)
+				UPDATE run SET state = 'failed', finished_at = $2, last_error = $3 WHERE id = $1`, r.id, now, msg)
 		default:
 			_, err = tx.Exec(ctx, `
 				UPDATE run SET state = 'queued', last_error = $2 WHERE id = $1 AND state = 'running'`, r.id, msg)

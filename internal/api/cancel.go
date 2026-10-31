@@ -1,11 +1,12 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"net/http"
 
 	"github.com/jackc/pgx/v5"
+
+	"github.com/Rumeasiyan/paradox/internal/runner"
 )
 
 // errCancelNotQueued is a cancel of a run that has already left the queue.
@@ -44,7 +45,7 @@ func (a *API) cancel(w http.ResponseWriter, r *http.Request, c caller) {
 			SELECT $1, id, 'cancel', $3 FROM system WHERE name = $2`, v.RunID, c.system, now); err != nil {
 			return err
 		}
-		if err := a.cancelRiverJob(ctx, tx, v.RunID); err != nil {
+		if err := runner.CancelRiverJobs(ctx, tx, a.River, v.RunID); err != nil {
 			return err
 		}
 		v.State = "cancelled"
@@ -63,23 +64,4 @@ func (a *API) cancel(w http.ResponseWriter, r *http.Request, c caller) {
 		a.Logger.Info("run cancelled", "system", c.system, "job", view.Job, "run_id", view.RunID)
 		writeJSON(w, http.StatusOK, view)
 	}
-}
-
-// cancelRiverJob cancels the River job that would start the run. A run
-// without one (none was ever made) needs nothing more.
-func (a *API) cancelRiverJob(ctx context.Context, tx pgx.Tx, runID string) error {
-	rows, err := tx.Query(ctx, `SELECT id FROM river_job WHERE args->>'run_id' = $1`, runID)
-	if err != nil {
-		return err
-	}
-	ids, err := pgx.CollectRows(rows, pgx.RowTo[int64])
-	if err != nil {
-		return err
-	}
-	for _, id := range ids {
-		if _, err := a.River.JobCancelTx(ctx, tx, id); err != nil {
-			return err
-		}
-	}
-	return nil
 }

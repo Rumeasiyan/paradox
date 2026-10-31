@@ -67,3 +67,33 @@ func TestRunsReportsAServiceThatIsDownOrRefuses(t *testing.T) {
 		t.Fatalf("conflicting flags: exit %d", code)
 	}
 }
+
+func TestRetryAndCancelCommands(t *testing.T) {
+	var paths []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.Method+" "+r.URL.Path)
+		if strings.HasSuffix(r.URL.Path, "/cancel") {
+			w.WriteHeader(409)
+			w.Write([]byte(`{"error":"only queued runs can be cancelled; this one is failed"}`))
+			return
+		}
+		w.Write([]byte(`{"run_id":"r1","system":"citadel","job":"send-reminders","state":"queued","attempts":4}`))
+	}))
+	defer srv.Close()
+	code, out, errOut := runArgs(t, adminEnv(srv), "retry", "r1")
+	if code != 0 || !strings.Contains(out, "r1 citadel/send-reminders: now queued") {
+		t.Fatalf("retry: exit %d %q %q", code, out, errOut)
+	}
+	code, _, errOut = runArgs(t, adminEnv(srv), "cancel", "r1")
+	if code != 1 || !strings.Contains(errOut, "only queued runs can be cancelled") {
+		t.Fatalf("cancel: exit %d %q", code, errOut)
+	}
+	if len(paths) != 2 || paths[0] != "POST /admin/runs/r1/retry" || paths[1] != "POST /admin/runs/r1/cancel" {
+		t.Fatalf("paths %v", paths)
+	}
+	for _, args := range [][]string{{"retry"}, {"retry", "a", "b"}, {"cancel", "-x"}} {
+		if code, _, _ := runArgs(t, adminEnv(srv), args...); code != 2 {
+			t.Errorf("%v: exit %d, want 2", args, code)
+		}
+	}
+}

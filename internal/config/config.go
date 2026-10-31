@@ -43,6 +43,7 @@ type Config struct {
 	MaxAhead        time.Duration   // PARADOX_MAX_AHEAD (PX-JOB-02)
 	RequestIDKeep   time.Duration   // PARADOX_REQUEST_ID_KEEP (PX-JOB-03)
 	RecordKeep      time.Duration   // PARADOX_RECORD_KEEP (PX-REC-02)
+	FailedDataKeep  time.Duration   // PARADOX_FAILED_DATA_KEEP (PX-REC-02, PX-REC-04)
 }
 
 // Defaults are the values used when a variable is unset or empty.
@@ -71,6 +72,7 @@ var Defaults = map[string]string{
 	"PARADOX_MAX_AHEAD":        "30d",
 	"PARADOX_REQUEST_ID_KEEP":  "24h",
 	"PARADOX_RECORD_KEEP":      "90d",
+	"PARADOX_FAILED_DATA_KEEP": "7d",
 }
 
 // Load reads every setting through getenv (os.Getenv in production) and
@@ -103,6 +105,7 @@ func Load(getenv func(string) string) (Config, error) {
 		MaxAhead:        r.dur("PARADOX_MAX_AHEAD"),
 		RequestIDKeep:   r.dur("PARADOX_REQUEST_ID_KEEP"),
 		RecordKeep:      r.dur("PARADOX_RECORD_KEEP"),
+		FailedDataKeep:  r.dur("PARADOX_FAILED_DATA_KEEP"),
 	}
 	c.Timezone = r.zone("PARADOX_TIMEZONE")
 	if c.PrivateKey == "" {

@@ -8,6 +8,16 @@ Format: date, title, **Decision**, **Why** (including what was rejected and the 
 
 ---
 
+## 2026-10-31: A failed run keeps its data for 7 days so the operator can retry it
+
+**Decision:** Job data is wiped when a run ends, except a failed run's, which is kept for `PARADOX_FAILED_DATA_KEEP` (default 7 days) and then wiped by retention. The operator can retry a failed run, scheduled or queued, while its data is still there. PX-REC-02 and the privacy requirement now say so (PRD 1.3).
+
+**Why:** Two requirements clashed: PX-REC-04 lets the operator retry a failed job, while PX-REC-02 deleted its data as soon as it ended, so a failed queued job (certificates for one course, say) had lost the data a retry needs. The owner chose to keep it for a short window. Rejected: retrying only scheduled runs (privacy unchanged, but a failed queued job would need its system to queue it again), and retrying without data (the system would receive an empty job and could silently do the wrong thing). Trade-off accepted: personal data in failed runs lives up to 7 days longer.
+
+**Consequences:** Retention wipes failed runs' data once older than the keep. Retrying a failed queued run after the keep is refused, because its data is gone. Contract: one new setting after 0.1.0, non-breaking.
+
+**Refs:** PX-REC-02, PX-REC-04, PX-NFR-06, `internal/retention`, `internal/runner`
+
 ## 2026-10-31: Operator commands go through a loopback admin endpoint
 
 **Decision:** Operator commands (`paradox runs`, and retry and cancel) do not open their own database connection. They call the running service on a loopback-only address, `PARADOX_ADMIN_LISTEN` (default `127.0.0.1:8081`), and the service answers with its own connections. Any non-loopback address is refused at start. The endpoint has no signature check: only someone already inside the container can reach it.

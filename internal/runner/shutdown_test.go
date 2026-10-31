@@ -225,7 +225,9 @@ func TestCrashDuringTheLastAttemptFailsAndReportsTheRunAfterRestart(t *testing.T
 
 	h.restart()
 	r := h.wait(id, 20*time.Second)
-	if r.state != "failed" || r.attempts != 1 || r.hasData || !r.finished || r.lastError != "interrupted: PARADOX stopped during the attempt" {
+	// A failed run keeps its data for PARADOX_FAILED_DATA_KEEP so the
+	// operator can retry it (PX-REC-02, PX-REC-04).
+	if r.state != "failed" || r.attempts != 1 || !r.hasData || !r.finished || r.lastError != "interrupted: PARADOX stopped during the attempt" {
 		t.Fatalf("after restart: run %+v", r)
 	}
 	if got := h.attemptLog(id); strings.Join(got, ",") != "1 error: interrupted: PARADOX stopped during the attempt" {

@@ -52,7 +52,7 @@ func (r Result) Removed() bool {
 //
 // Queued and running runs are never deleted or changed. A keep of zero or
 // less turns that deletion off. On error the counts so far are returned.
-func Sweep(ctx context.Context, pool *pgxpool.Pool, now time.Time, recordKeep, requestIDKeep time.Duration) (Result, error) {
+func Sweep(ctx context.Context, pool *pgxpool.Pool, now time.Time, recordKeep, requestIDKeep, failedDataKeep time.Duration) (Result, error) {
 	var res Result
 	var err error
 	if recordKeep > 0 {
@@ -75,11 +75,15 @@ func Sweep(ctx context.Context, pool *pgxpool.Pool, now time.Time, recordKeep, r
 			return res, fmt.Errorf("delete old request IDs: %w", err)
 		}
 	}
+	// A failed run keeps its data for failedDataKeep so the operator can
+	// retry it (PX-REC-02, PX-REC-04); every other finished run loses it.
 	res.DataWiped, err = batched(ctx, pool, `
 		UPDATE run SET data = NULL WHERE id IN (
 			SELECT id FROM run
-			WHERE data IS NOT NULL AND state IN `+finalStates+`
-			LIMIT $1)`)
+			WHERE data IS NOT NULL AND (
+				state IN ('succeeded', 'cancelled', 'skipped', 'missed')
+				OR (state = 'failed' AND finished_at < $2))
+			LIMIT $1)`, now.Add(-failedDataKeep).UTC())
 	if err != nil {
 		return res, fmt.Errorf("wipe finished job data: %w", err)
 	}
@@ -112,7 +116,7 @@ func batched(ctx context.Context, pool *pgxpool.Pool, sql string, args ...any) (
 // sweep is logged at Error and the loop carries on; a sweep that removed
 // anything logs its counts at Info. The logs carry counts only, never job
 // data (PX-NFR-06). A nil logger means slog.Default().
-func Loop(ctx context.Context, pool *pgxpool.Pool, every, recordKeep, requestIDKeep time.Duration, logger *slog.Logger) {
+func Loop(ctx context.Context, pool *pgxpool.Pool, every, recordKeep, requestIDKeep, failedDataKeep time.Duration, logger *slog.Logger) {
 	if every <= 0 {
 		every = DefaultEvery
 	}
@@ -123,7 +127,7 @@ func Loop(ctx context.Context, pool *pgxpool.Pool, every, recordKeep, requestIDK
 		if ctx.Err() != nil {
 			return
 		}
-		res, err := Sweep(ctx, pool, time.Now(), recordKeep, requestIDKeep)
+		res, err := Sweep(ctx, pool, time.Now(), recordKeep, requestIDKeep, failedDataKeep)
 		if err != nil {
 			if ctx.Err() == nil {
 				logger.ErrorContext(ctx, "retention sweep failed", slog.String("error", err.Error()))

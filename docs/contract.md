@@ -134,7 +134,7 @@ Base: `http://paradox:8080` on PARADOX's network, or the deployment's public add
 | Field | Rule |
 |---|---|
 | `job` | Required. A job in the calling system's own `schedules.yaml` (PX-JOB-01). |
-| `data` | Optional, any JSON value, at most 64 KB as sent (`PARADOX_MAX_DATA_BYTES`). Passed to the system unchanged. May hold personal data; PARADOX deletes it when the run ends (PX-REC-02). |
+| `data` | Optional, any JSON value, at most 64 KB as sent (`PARADOX_MAX_DATA_BYTES`). Passed to the system unchanged. May hold personal data; PARADOX deletes it when the run ends, or 7 days after a failed run ends (`PARADOX_FAILED_DATA_KEEP`) so the operator can retry it (PX-REC-02). |
 | `run_at` | Optional, RFC 3339 with an offset. Missing or past means as soon as possible. More than 30 days ahead (`PARADOX_MAX_AHEAD`) is refused (PX-JOB-02). |
 | `request_id` | Required, 1 to 128 characters from `A-Z a-z 0-9 . _ -`. The same `request_id` from the same system within 24 hours (`PARADOX_REQUEST_ID_KEEP`) returns the first run and queues nothing (PX-JOB-03). |
 
@@ -209,3 +209,4 @@ PARADOX is configured only by environment variables and the systems folder (PX-N
 | `PARADOX_MAX_AHEAD` | `30d` | Furthest `run_at` accepted (PX-JOB-02). |
 | `PARADOX_REQUEST_ID_KEEP` | `24h` | How long a `request_id` is remembered (PX-JOB-03). |
 | `PARADOX_RECORD_KEEP` | `90d` | How long run records are kept (PX-REC-02). |
+| `PARADOX_FAILED_DATA_KEEP` | `7d` | How long a failed run keeps its job data so the operator can retry it; other runs lose their data when they end (PX-REC-02, PX-REC-04). Added after 0.1.0. |

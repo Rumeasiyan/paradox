@@ -20,6 +20,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/riverqueue/river"
 )
 
 // MaxLimit caps how many runs one listing returns.
@@ -27,9 +28,11 @@ const MaxLimit = 1000
 
 // Admin serves the operator endpoints.
 type Admin struct {
-	Pool   *pgxpool.Pool
-	Logger *slog.Logger
-	Now    func() time.Time
+	Pool           *pgxpool.Pool
+	River          *river.Client[pgx.Tx]
+	FailedDataKeep time.Duration // PARADOX_FAILED_DATA_KEEP
+	Logger         *slog.Logger
+	Now            func() time.Time
 }
 
 func (a *Admin) now() time.Time {
@@ -56,6 +59,8 @@ type Run struct {
 func (a *Admin) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /admin/runs", a.list)
+	mux.HandleFunc("POST /admin/runs/{run_id}/retry", a.action("retry", a.retry))
+	mux.HandleFunc("POST /admin/runs/{run_id}/cancel", a.action("cancel", a.cancel))
 	return mux
 }
 

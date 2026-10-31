@@ -64,7 +64,7 @@ ENTITIES = {
         "keys": [("PK", "id", ""), ("FK", "job_id", "")],
         "fields": [
             ("source", "schedule or queue"),
-            ("data", "job data, max 64 KB (default); wiped when the run ends"),
+            ("data", "job data, max 64 KB (default); wiped when the run ends, or 7 days (default) after a failed run ends so the operator can retry it"),
             ("due_at", "timestamp (UTC)"),
             ("state", "queued, running, succeeded, failed, cancelled, skipped or missed"),
             ("max_attempts", "number (retries + 1)"),

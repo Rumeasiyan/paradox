@@ -2,6 +2,11 @@
 
 All notable changes to PARADOX. The version is in `VERSION`; it follows semantic versioning and changes with every completed change that alters behaviour (see `AGENTS.md`, Versioning).
 
+## 0.12.0
+
+- `paradox retry RUN_ID` runs a failed run again with a fresh set of attempts; `paradox cancel RUN_ID` cancels a queued run. Both go through the loopback admin endpoint and are recorded as the operator's run actions (PX-REC-04).
+- A failed run now keeps its job data for `PARADOX_FAILED_DATA_KEEP` (default 7 days) so it can be retried, then retention wipes it; every other run still loses its data when it ends (PRD 1.3, PX-REC-02). A failed queued run past that keep cannot be retried.
+
 ## 0.11.0
 
 - A scheduled due time later than `PARADOX_CATCH_UP` (PARADOX was down) is recorded once as a `missed` run; the most recent due time within the window still runs once (PX-SCH-05).

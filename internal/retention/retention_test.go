@@ -18,6 +18,7 @@ import (
 const (
 	recordKeep    = 90 * 24 * time.Hour
 	requestIDKeep = 24 * time.Hour
+	failedKeep    = 7 * 24 * time.Hour
 )
 
 // freshDB drops and recreates PARADOX's tables and returns a pool with one
@@ -115,7 +116,7 @@ func TestSweepDeletesOldRunsWithTheirRowsAndKeepsTheRest(t *testing.T) {
 	running := addRun(t, pool, "running", at(old), `{"n": 2}`)
 	exec(t, pool, `UPDATE run SET due_at = $1`, old.Add(-365*24*time.Hour))
 
-	res, err := Sweep(context.Background(), pool, now, recordKeep, requestIDKeep)
+	res, err := Sweep(context.Background(), pool, now, recordKeep, requestIDKeep, failedKeep)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,7 +155,7 @@ func TestSweepDeletesOldRequestIDsButKeepsTheirRuns(t *testing.T) {
 	newReq := addRun(t, pool, "queued", nil, `{}`)
 	addChildren(t, pool, newReq, "new", now.Add(-requestIDKeep+time.Minute))
 
-	res, err := Sweep(context.Background(), pool, now, recordKeep, requestIDKeep)
+	res, err := Sweep(context.Background(), pool, now, recordKeep, requestIDKeep, failedKeep)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,13 +180,18 @@ func TestSweepWipesDataLeftOnFinishedRuns(t *testing.T) {
 	pool := freshDB(t)
 	now := time.Date(2026, 10, 31, 12, 0, 0, 0, time.UTC)
 	var final []string
-	for _, state := range []string{"succeeded", "failed", "cancelled", "skipped", "missed"} {
+	for _, state := range []string{"succeeded", "cancelled", "skipped", "missed"} {
 		final = append(final, addRun(t, pool, state, at(now.Add(-time.Minute)), `{"email": "someone@example.com"}`))
 	}
+	// A failed run keeps its data for the failed-data keep so the operator
+	// can retry it (PX-REC-04), then loses it like any other.
+	recentFail := addRun(t, pool, "failed", at(now.Add(-6*24*time.Hour)), `{"email": "someone@example.com"}`)
+	oldFail := addRun(t, pool, "failed", at(now.Add(-8*24*time.Hour)), `{"email": "someone@example.com"}`)
+	final = append(final, oldFail)
 	queued := addRun(t, pool, "queued", nil, `{"keep": true}`)
 	running := addRun(t, pool, "running", nil, `{"keep": true}`)
 
-	res, err := Sweep(context.Background(), pool, now, recordKeep, requestIDKeep)
+	res, err := Sweep(context.Background(), pool, now, recordKeep, requestIDKeep, failedKeep)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -197,11 +203,14 @@ func TestSweepWipesDataLeftOnFinishedRuns(t *testing.T) {
 			t.Errorf("finished run %s still holds data", id)
 		}
 	}
+	if n := count(t, pool, `SELECT count(*) FROM run WHERE id = $1 AND data IS NOT NULL`, recentFail); n != 1 {
+		t.Error("a failed run lost its data inside the keep")
+	}
 	if n := count(t, pool, `SELECT count(*) FROM run WHERE id IN ($1, $2) AND data IS NOT NULL`, queued, running); n != 2 {
 		t.Error("data of an open run was wiped")
 	}
 	// A second sweep finds nothing left to do.
-	res, err = Sweep(context.Background(), pool, now, recordKeep, requestIDKeep)
+	res, err = Sweep(context.Background(), pool, now, recordKeep, requestIDKeep, failedKeep)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -228,12 +237,12 @@ func TestSweepWorksInBatches(t *testing.T) {
 	exec(t, pool, `
 		WITH r AS (
 			INSERT INTO run (job_id, source, data, due_at, state, max_attempts, finished_at)
-			SELECT 1, 'queue', '{"x": 1}', $1, 'failed', 1, $1 FROM generate_series(1, $2)
+			SELECT 1, 'queue', '{"x": 1}', $1, 'succeeded', 1, $1 FROM generate_series(1, $2)
 			RETURNING id)
 		INSERT INTO queue_request (system_id, request_id, run_id, received_at, key_fingerprint)
 		SELECT 1, 'n-' || id::text, id, $3, 'fp' FROM r`, now.Add(-time.Hour), total, now.Add(-requestIDKeep-time.Hour))
 
-	res, err := Sweep(context.Background(), pool, now, recordKeep, requestIDKeep)
+	res, err := Sweep(context.Background(), pool, now, recordKeep, requestIDKeep, failedKeep)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -277,7 +286,7 @@ func startLoop(t *testing.T, pool *pgxpool.Pool, every time.Duration, logger *sl
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() {
-		Loop(ctx, pool, every, recordKeep, requestIDKeep, logger)
+		Loop(ctx, pool, every, recordKeep, requestIDKeep, failedKeep, logger)
 		close(done)
 	}()
 	return func() {
@@ -349,7 +358,7 @@ func TestLoopReturnsAtOnceWhenAlreadyCancelled(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		// A nil pool would panic if Loop tried to sweep.
-		Loop(ctx, nil, time.Hour, recordKeep, requestIDKeep, slog.New(slog.DiscardHandler))
+		Loop(ctx, nil, time.Hour, recordKeep, requestIDKeep, failedKeep, slog.New(slog.DiscardHandler))
 		close(done)
 	}()
 	select {

@@ -1,6 +1,6 @@
 # PARADOX backlog
 
-Source: [PRD](prd.md) v1.2 (requirement IDs `PX-...`, Annex A data model, Annex B links `AB n`) and [how it works](how-it-works.md) (flow steps `HW A1` to `HW A15`, `HW B1` to `HW B5`). Stories cite these; read them for the detail.
+Source: [PRD](prd.md) v1.3 (requirement IDs `PX-...`, Annex A data model, Annex B links `AB n`) and [how it works](how-it-works.md) (flow steps `HW A1` to `HW A15`, `HW B1` to `HW B5`). Stories cite these; read them for the detail.
 
 ## Definition of done (every story)
 
@@ -106,7 +106,7 @@ Tracked in #4 and #5.
 | 28 | [x] | Wave 3 | E-RUN-04 | Clean shutdown; unfinished runs retried after restart | PX-RUN-05 | Must | 17 |
 | 29 | [x] | Wave 3 | E-REC-02 | Wipe job data at the end; delete old records | PX-REC-02, PX-NFR-06 | Must | 20 |
 | 30 | [x] | Solo | E-REC-03 | Command line: list runs | PX-REC-03 | Must | 17 |
-| 31 | [ ] | Solo | E-REC-04 | Command line: retry and cancel, recorded as run actions | PX-REC-04 | Must | 22, 30 |
+| 31 | [x] | Solo | E-REC-04 | Command line: retry and cancel, recorded as run actions | PX-REC-04 | Must | 22, 30 |
 | 32 | [ ] | Solo | E-ENB-04 | Capacity and speed check against the stated limits | PX-NFR-01, PX-NFR-02 | Must | 27, 29 |
 | 33 | [ ] | Solo | E-ENB-05 | Security check: only the queue path served, nothing secret logged, runs as non-root on a read-only root | PX-NFR-05, PX-NFR-06 | Must | 19, 29 |
 

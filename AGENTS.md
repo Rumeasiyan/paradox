@@ -6,7 +6,7 @@ Guide for AI agents and new contributors. Read it before changing anything. `CLA
 
 PARADOX is a scheduler and job queue for systems that sleep when idle (scaled to zero by Sablier). Systems declare timed jobs in a schedule file or queue one-off jobs; PARADOX wakes the system, calls its job address with a signed request, retries failures, reports what still fails to a push monitor, and records every run. It is a public, generic Apache-2.0 project: one deployment runs it for several systems on a shared Docker server, and its real settings live in that deployment's own private repository, never here.
 
-Status: design is frozen (PRD v1.2); the build follows `docs/backlog.md`.
+Status: design is frozen (PRD v1.3); the build follows `docs/backlog.md`.
 
 ## Where to look
 

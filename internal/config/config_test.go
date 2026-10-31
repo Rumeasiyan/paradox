@@ -43,6 +43,7 @@ func TestDefaultsMatchThePRD(t *testing.T) {
 		{"max ahead (PX-JOB-02)", c.MaxAhead, 30 * 24 * time.Hour},
 		{"request ID keep (PX-JOB-03)", c.RequestIDKeep, 24 * time.Hour},
 		{"record keep (PX-REC-02)", c.RecordKeep, 90 * 24 * time.Hour},
+		{"failed data keep (PX-REC-02)", c.FailedDataKeep, 7 * 24 * time.Hour},
 		{"empty sablier URL", c.SablierURL, ""},
 		{"empty heartbeat URL", c.HeartbeatURL, ""},
 	}

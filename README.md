@@ -15,6 +15,7 @@ paradox keygen -out paradox.key        # once: PARADOX's key pair
 paradox serve                          # settings from PARADOX_* variables, see docs/contract.md section 7
 paradox -healthcheck                   # container health check
 paradox runs -failed                   # operator: list failed runs (inside the container)
+paradox retry RUN_ID                   # operator: run a failed run again
 paradox enqueue -url URL -system NAME -key FILE -job NAME   # queue a job as a system, see docs/testsystem.md
 ```
 

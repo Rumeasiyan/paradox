@@ -50,6 +50,26 @@ func Enqueue(ctx context.Context, tx pgx.Tx, rc *river.Client[pgx.Tx], jobID int
 	return runID, err
 }
 
+// CancelRiverJobs cancels the River jobs carrying a run, in tx, so a
+// cancelled run never wakes its system. Used by the queue API and the
+// operator endpoint.
+func CancelRiverJobs(ctx context.Context, tx pgx.Tx, rc *river.Client[pgx.Tx], runID string) error {
+	rows, err := tx.Query(ctx, `SELECT id FROM river_job WHERE args->>'run_id' = $1`, runID)
+	if err != nil {
+		return err
+	}
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[int64])
+	if err != nil {
+		return err
+	}
+	for _, id := range ids {
+		if _, err := rc.JobCancelTx(ctx, tx, id); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Tick handles every repeating job due at or before now and moves each
 // job's next due time past now. Of all a job's due times up to now:
 //

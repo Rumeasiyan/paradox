@@ -2,7 +2,7 @@
 
 The scheduler and job queue for systems that sleep when idle.
 
-Version 1.2 (frozen), 31 October 2026. Owner: Suseenthiran Arulraj Rumeasiyan.
+Version 1.3 (frozen), 31 October 2026. Owner: Suseenthiran Arulraj Rumeasiyan.
 
 ## 1. Overview
 
@@ -105,7 +105,7 @@ A system is known to PARADOX only through its schedule file and public key (PX-S
 | ID | Requirement |
 |---|---|
 | PX-REC-01 | Every run is recorded with the system, job, due time, start, end, attempts, result and the last error (first 2 KB). |
-| PX-REC-02 | A job's data is deleted when the job ends. Run records are deleted after 90 days (default). |
+| PX-REC-02 | A job's data is deleted when its run ends, except that a failed run keeps its data for 7 days (default) so the operator can retry it (PX-REC-04). Run records are deleted after 90 days (default). |
 | PX-REC-03 | The operator can list runs by system, job, result and date from the command line. |
 | PX-REC-04 | The operator can retry a failed job or cancel a queued job from the command line. Each such action is recorded with the time. |
 
@@ -127,7 +127,7 @@ A system is known to PARADOX only through its schedule file and public key (PX-S
 | PX-NFR-03 | **Availability:** PARADOX never sleeps and restarts by itself after a crash. |
 | PX-NFR-04 | **Recovery:** timetable, queue and records live in PARADOX's own database, which is in the server's nightly backup and passes a restore test. |
 | PX-NFR-05 | **Security:** private keys never leave their owner; only the queue path is reachable from outside the server; calls outside the internal network are encrypted; PARADOX runs as a non-root user with a read-only file system. |
-| PX-NFR-06 | **Privacy:** job data may contain personal data. It is kept only until the job ends and run records only for 90 days (PX-REC-02) and never written to logs. The operator's data protection law applies, for example Sri Lanka's Personal Data Protection Act No. 9 of 2022. |
+| PX-NFR-06 | **Privacy:** job data may contain personal data. It is kept only until the run ends, or 7 days after a failed run ends, and run records only for 90 days (PX-REC-02) and never written to logs. The operator's data protection law applies, for example Sri Lanka's Personal Data Protection Act No. 9 of 2022. |
 | PX-NFR-07 | **Maintainability:** one program, configured only by settings and the systems folder, with no site values in its code; open-source licence; contract versioned (PX-CON-02). |
 
 ## 5. Technology stack
@@ -174,7 +174,7 @@ Boxes show each entity's keys; the other fields are in A.2. Lines point from a t
 
 | Entity | Fields |
 |---|---|
-| `run` | `source`: schedule or queue<br>`data`: job data, max 64 KB (default); wiped when the run ends<br>`due_at`: timestamp (UTC)<br>`state`: queued, running, succeeded, failed, cancelled, skipped or missed<br>`max_attempts`: number (retries + 1)<br>`attempts`: number (0 to max_attempts)<br>`started_at`: timestamp (UTC), optional<br>`finished_at`: timestamp (UTC), optional<br>`last_error`: text, max 2 KB, optional<br>`reported_at`: timestamp (UTC), optional; when the failure report was sent<br>*Deleted after 90 days (default). The ID the queue API returns is run.id.* |
+| `run` | `source`: schedule or queue<br>`data`: job data, max 64 KB (default); wiped when the run ends, or 7 days (default) after a failed run ends so the operator can retry it<br>`due_at`: timestamp (UTC)<br>`state`: queued, running, succeeded, failed, cancelled, skipped or missed<br>`max_attempts`: number (retries + 1)<br>`attempts`: number (0 to max_attempts)<br>`started_at`: timestamp (UTC), optional<br>`finished_at`: timestamp (UTC), optional<br>`last_error`: text, max 2 KB, optional<br>`reported_at`: timestamp (UTC), optional; when the failure report was sent<br>*Deleted after 90 days (default). The ID the queue API returns is run.id.* |
 | `attempt` | `number`: number (1 to max_attempts)<br>`started_at`: timestamp (UTC)<br>`ended_at`: timestamp (UTC), optional<br>`outcome`: success, error, timeout or wake_timeout<br>`status_code`: number, optional; the system's answer<br>`error`: text, max 2 KB, optional<br>*Deleted with its run.* |
 
 #### Operation

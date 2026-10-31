@@ -153,13 +153,13 @@ func serve(ctx context.Context, stderr io.Writer, getenv func(string) string, re
 		stopRiver(rc, cfg.ShutdownGrace, logger)
 		return fmt.Errorf("PARADOX_ADMIN_LISTEN %s: %w", cfg.AdminListen, err)
 	}
-	adminSrv := &http.Server{Handler: (&admin.Admin{Pool: pool, Logger: logger}).Handler(), ReadHeaderTimeout: 10 * time.Second}
+	adminSrv := &http.Server{Handler: (&admin.Admin{Pool: pool, River: rc, FailedDataKeep: cfg.FailedDataKeep, Logger: logger}).Handler(), ReadHeaderTimeout: 10 * time.Second}
 	go adminSrv.Serve(adminLn)
 
 	sched := &runner.Scheduler{D: deps, River: rc, CatchUp: cfg.CatchUpWindow}
 	go sched.Run(ctx, tickEvery)
 	go reporting.HeartbeatLoop(ctx, reporter, cfg.HeartbeatEvery, logger)
-	go retention.Loop(ctx, pool, retention.DefaultEvery, cfg.RecordKeep, cfg.RequestIDKeep, logger)
+	go retention.Loop(ctx, pool, retention.DefaultEvery, cfg.RecordKeep, cfg.RequestIDKeep, cfg.FailedDataKeep, logger)
 
 	logger.Info("paradox started", "version", paradox.Version, "systems", len(list), "listen", ln.Addr().String())
 	if ready != nil {
