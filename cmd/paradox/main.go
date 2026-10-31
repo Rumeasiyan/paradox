@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	_ "time/tzdata" // timezone data inside the binary: minimal images have none
 
 	"github.com/Rumeasiyan/paradox"
 	"github.com/Rumeasiyan/paradox/sign"

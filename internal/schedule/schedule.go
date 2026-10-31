@@ -50,6 +50,11 @@ type Defaults struct {
 // limited to what is safe in both.
 var nameRE = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`)
 
+// ValidName reports whether s is a valid system or job name: lower-case
+// letters, digits and hyphens, starting and ending with a letter or digit,
+// at most 63 characters. Other packages use it so there is one rule.
+func ValidName(s string) bool { return nameRE.MatchString(s) }
+
 const maxRetries = 100
 
 // Parse reads one schedules.yaml. file is used only in messages.

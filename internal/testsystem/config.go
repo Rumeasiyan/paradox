@@ -42,11 +42,11 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"regexp"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/Rumeasiyan/paradox/internal/schedule"
 	"github.com/Rumeasiyan/paradox/sign"
 )
 
@@ -68,10 +68,6 @@ type Config struct {
 	FailJobs    map[string]bool          // TESTSYSTEM_FAIL_JOBS
 	SlowJobs    map[string]time.Duration // TESTSYSTEM_SLOW_JOBS
 }
-
-// jobNameRE is the schedule file's job name rule: names are URL path
-// segments, so anything else could never be called.
-var jobNameRE = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`)
 
 // LoadConfig reads the settings through getenv (os.Getenv in production) and
 // returns every problem at once, each naming its variable.
@@ -114,7 +110,7 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 
 	for _, name := range list(getenv(EnvFailJobs)) {
 		switch {
-		case !jobNameRE.MatchString(name):
+		case !schedule.ValidName(name):
 			fail(EnvFailJobs, "job %q must be lower-case letters, digits and hyphens, at most 63 characters", name)
 		case c.FailJobs[name]:
 			fail(EnvFailJobs, "job %q appears twice", name)
@@ -130,7 +126,7 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 			fail(EnvSlowJobs, "entry %q must be name=duration, for example slow=30s", pair)
 			continue
 		}
-		if !jobNameRE.MatchString(name) {
+		if !schedule.ValidName(name) {
 			fail(EnvSlowJobs, "job %q must be lower-case letters, digits and hyphens, at most 63 characters", name)
 			continue
 		}

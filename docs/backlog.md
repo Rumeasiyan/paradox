@@ -60,11 +60,11 @@ Tracked in #4; story 9 answers #3.
 |---|---|---|---|---|---|---|---|
 | 9 | [x] | Solo | E-ENB-02 | Local database stack with PgBouncer in session mode; River connected | AB 5, AB 6, PX-NFR-02 | Must | 1 |
 | 10 | [x] | Solo | E-REC-01 | Database schema and migrations from Annex A | PX-REC-01 | Must | 9 |
-| 11 | [ ] | Wave 1 | E-SCH-02 | Load the timetable on start, times in UTC | PX-SCH-03, PX-SYS-05; HW A1 to A3 | Must | 5, 10 |
+| 11 | [x] | Wave 1 | E-SCH-02 | Load the timetable on start, times in UTC | PX-SCH-03, PX-SYS-05; HW A1 to A3 | Must | 5, 10 |
 | 12 | [x] | Wave 1 | E-RUN-01 | Waker interface with a local stand-in | PX-RUN-01, PX-RUN-02; AB 7 | Must | 1 |
 | 13 | [x] | Wave 1 | E-REP-01 | Reporter interface with a log stand-in; heartbeat | PX-REP-02, PX-REP-03; AB 10 | Must | 1 |
 | 14 | [x] | Wave 1 | E-REP-02 | Health check tied to the database | PX-REP-04 | Must | 10 |
-| 15 | [ ] | Wave 1 | E-ENB-03 | Test system command `paradox testsystem` that answers `/jobs/<name>` | HW A8, HW A9 | Must | 4 |
+| 15 | [x] | Wave 1 | E-ENB-03 | Test system command `paradox testsystem` that answers `/jobs/<name>` | HW A8, HW A9 | Must | 4 |
 | 16 | [ ] | Solo | E-RUN-02 | Runner: due job, run, wake, signed call, time limit, record | PX-RUN-01, PX-RUN-02, PX-RUN-03, PX-REC-01; HW A4 to A12 | Must | 11, 12, 15 |
 | 17 | [ ] | Solo | E-REP-03 | Retries with backoff, then one failure report | PX-REP-01, PX-REP-02; HW A13 to A15 | Must | 13, 16 |
 

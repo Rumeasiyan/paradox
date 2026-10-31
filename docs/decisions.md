@@ -8,6 +8,16 @@ Format: date, title, **Decision**, **Why** (including what was rejected and the 
 
 ---
 
+## 2026-10-31: Daylight saving: each skipped or repeated time runs once
+
+**Decision:** Schedule times are worked out in `PARADOX_TIMEZONE` and stored in UTC. A time skipped when clocks go forward runs once, at the first real instant after the gap. A time repeated when clocks go back runs only at its first occurrence, for every field, so an hourly job gets one run, not two, in the repeated hour. `@every` schedules count real elapsed time. Changing `PARADOX_TIMEZONE` alone does not move an already stored next due time; the one after it uses the new zone.
+
+**Why:** PX-SCH-03 says a skipped or repeated time runs once. The cron library alone does neither: tested in Europe/London, a 01:30 daily job never ran on the day clocks went forward and ran twice on the day they went back. `Next` corrects both, and a test records the library's own behaviour so a change in it is noticed. Rejected: classic Unix cron, which still runs hourly jobs twice in the repeated hour (it reads "every hour" as elapsed time, which `@every 1h` already offers). Recomputing every stored time on a timezone change would need the zone stored in the database, for a setting that is set once per deployment.
+
+**Consequences:** Timezone data is built into the binary (`time/tzdata`), so zones work in minimal images. Deployments in zones without daylight saving see no difference.
+
+**Refs:** `internal/timetable`, PX-SCH-03
+
 ## 2026-10-31: River connection mode: PollOnly over a session pool of 2
 
 **Decision:** PARADOX connects through PgBouncer in session mode with at most 2 connections, and runs River with `PollOnly` (checking for due jobs every second) instead of LISTEN/NOTIFY. It needs only CREATE rights on its own database: no superuser, no extension.

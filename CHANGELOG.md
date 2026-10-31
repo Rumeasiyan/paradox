@@ -2,6 +2,11 @@
 
 All notable changes to PARADOX. The version is in `VERSION`; it follows semantic versioning and changes with every completed change that alters behaviour (see `AGENTS.md`, Versioning).
 
+## 0.5.0
+
+- `paradox testsystem` runs a stand-in system that checks PARADOX's signature and answers `/jobs/<name>`; settings in `docs/testsystem.md`.
+- Timezone data is built into the binary, so `PARADOX_TIMEZONE` works in images without zone files.
+
 ## 0.4.0
 
 - `paradox -healthcheck` exits 0 only when the running service answers on `PARADOX_LISTEN` and can reach its database (PX-REP-04); the reason for a failure is logged, never sent.

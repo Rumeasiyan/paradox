@@ -14,6 +14,7 @@ Status: design is frozen (PRD v1.2); the build follows `docs/backlog.md`.
 |---|---|
 | `docs/prd.md` | What PARADOX must do. Every behaviour has an ID (`PX-<AREA>-<NN>`); cite IDs in issues, commits and code comments where a rule comes from. |
 | `docs/contract.md` | The published contract: systems folder, schedule file, keys, signing, calls to systems, queue API, settings. A test keeps its settings table equal to the code's defaults. |
+| `docs/testsystem.md` | Settings and answers of `paradox testsystem`, the stand-in system shipped in the image. |
 | `docs/how-it-works.md` | The two main flows (scheduled job, queued job) step by step, the draft schedule file, who holds which key. |
 | `docs/diagrams/paradox-architecture.dot` | Reference architecture (PRD Annex B). Link numbers must match the Annex B table. |
 | `docs/diagrams/build_erd.py` | The data model (PRD Annex A): entities and links in one script that draws `paradox-erd.svg` and writes the PRD data dictionary. Edit the script, never the generated files. |
