@@ -1,6 +1,6 @@
 # PARADOX contract
 
-Contract version **0.1.0** (draft, not yet tagged).
+Contract version **0.1.0**, tagged `sign/v0.1.0` on 31 October 2026.
 
 This is what deployments and systems build against: the systems folder, the schedule file, keys, the signing scheme, the calls PARADOX makes to a system, the queue API, and PARADOX's settings. Requirement IDs (`PX-...`) refer to [prd.md](prd.md); the flows are in [how-it-works.md](how-it-works.md).
 

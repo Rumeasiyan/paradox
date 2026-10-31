@@ -4,6 +4,8 @@ All notable changes to PARADOX. The version is in `VERSION`; it follows semantic
 
 ## 0.3.0
 
+Speaks contract 0.1.0 (`sign/v0.1.0`, see `docs/contract.md`).
+
 - `paradox keygen -out FILE` creates an Ed25519 key pair: the private half goes to FILE (owner-only, never overwritten, never printed), the public half is printed for `system.pub`.
 - `paradox pubkey [-in FILE]` prints the public half of a private key, by default PARADOX's own from `PARADOX_PRIVATE_KEY`.
 
