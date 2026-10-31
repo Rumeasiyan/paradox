@@ -6,7 +6,7 @@ Requirement IDs (PX-...) refer to [prd.md](prd.md). The architecture diagram and
 
 ## The schedule file
 
-Each system has its own subfolder in PARADOX's systems folder (location is a setting), holding `schedules.yaml` and `system.pub` (its public key; two lines while a key is being changed). Draft format; the published contract is the reference.
+Each system has its own subfolder in PARADOX's systems folder (location is a setting), holding `schedules.yaml` and `system.pub` (its public key; two lines while a key is being changed). The exact format is in [contract.md](contract.md).
 
 ```yaml
 system: citadel
@@ -102,7 +102,7 @@ sequenceDiagram
     P-->>C: 401 or 403, nothing queued
   else all checks pass
     P->>DB: store job, run_at in UTC
-    P-->>C: 202 accepted, job ID
+    P-->>C: 202 accepted, run ID
   end
   Note over P,DB: at run_at, Flow A runs from step 4
 ```
@@ -111,7 +111,7 @@ sequenceDiagram
 2. PARADOX checks who is asking and whether they may ask for this job (PX-SIG-02 to PX-SIG-04).
 3. Either it refuses: an unknown system or a bad signature gets 401, another system's job gets 403, and nothing is queued (PX-SIG-05).
 4. Or it accepts and stores the job, converting the time to UTC,
-5. and CITADEL gets back a job ID. At 22:00 Flow A takes over from step 4: wake, run, retry, report.
+5. and CITADEL gets back a run ID, which it can use to check on the run or cancel it. At 22:00 Flow A takes over from step 4: wake, run, retry, report.
 
 ## Who holds which key
 

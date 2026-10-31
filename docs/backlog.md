@@ -43,7 +43,7 @@ Tracked in #2.
 | 4 | [x] | Solo | E-SIG-01 | Signing helper module: sign and verify in both directions | PX-SIG-01, PX-SIG-02, PX-SIG-03, PX-SIG-04, PX-SIG-06, PX-CON-03 | Must | 1 |
 | 5 | [x] | Solo | E-SYS-02 | Systems folder reader: schedule file and public keys per system | PX-SCH-01, PX-SYS-01, PX-SYS-02, PX-SYS-05, PX-SIG-06 | Must | 2, 3, 4 |
 | 6 | [x] | Solo | E-CON-01 | Key generator command | PX-CON-04 | Must | 4 |
-| 7 | [ ] | Solo | E-CON-02 | Contract docs: schedule format, queue API, signing scheme, settings | PX-CON-01, PX-CON-02 | Must | 2, 3, 4 |
+| 7 | [x] | Solo | E-CON-02 | Contract docs: schedule format, queue API, signing scheme, settings | PX-CON-01, PX-CON-02 | Must | 2, 3, 4 |
 | 8 | [ ] | With you | E-CON-03 | Tag the first contract version | PX-CON-01, PX-CON-02 | Must | 5, 6, 7 |
 
 Notes:
