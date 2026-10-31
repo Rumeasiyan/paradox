@@ -8,6 +8,16 @@ Format: date, title, **Decision**, **Why** (including what was rejected and the 
 
 ---
 
+## 2026-10-31: YAML and cron libraries for schedule files
+
+**Decision:** Schedule files are parsed with `go.yaml.in/yaml/v3` (node API, for line numbers) and repeat times with `github.com/robfig/cron/v3` (`ParseStandard`: five fields or `@` shortcuts). A timezone prefix inside a cron expression (`TZ=`, `CRON_TZ=`) is refused.
+
+**Why:** PX-SCH-04 needs the file, line and fault for every error, which the YAML node API gives; `go.yaml.in/yaml/v3` is the YAML project's maintained continuation of the archived `gopkg.in/yaml.v3`. `robfig/cron/v3` is unmaintained since 2020 but small, stable, and the parser River's own periodic-job examples use, so its schedules plug into River directly. Rejected: writing a cron parser (more code to get wrong around month ends and weekdays). Timezones in expressions are refused so every file is read in the one `PARADOX_TIMEZONE` (PX-SCH-03); otherwise two files could silently disagree.
+
+**Consequences:** If `robfig/cron` ever needs a fix, vendor or fork it rather than switching syntax, because the cron syntax is part of the published contract.
+
+**Refs:** `internal/schedule`, PX-SCH-02 to PX-SCH-04
+
 ## 2026-10-31: Data model: six tables, keys in files, River tables outside the model
 
 **Decision:** PARADOX's own data is six tables: `system`, `job`, `queue_request`, `run`, `attempt`, `run_action` (PRD Annex A). A `job` is a named job of a system; a `run` is one execution of it, and the ID the queue API returns is `run.id`. Public keys are not stored in the database; only the fingerprint of the key that signed each queue request is. River's own tables are working state and are not part of the model; each River job carries the `run_id` it executes. A system that leaves the systems folder keeps its row with `removed_at`.
