@@ -2,6 +2,10 @@
 
 All notable changes to PARADOX. The version is in `VERSION`; it follows semantic versioning and changes with every completed change that alters behaviour (see `AGENTS.md`, Versioning).
 
+## 0.12.1
+
+- Fixed: every run waited up to 5 extra seconds before starting, because River makes a job given any scheduled time wait for its 5-second maintenance cycle. Runs due now are now handed to River as available at once; future ones are scheduled 5 seconds early and wait out the rest, so they still never start early. Measured on the local stack: worst start delay 1.1 s instead of 5.8 s at 17 times the PRD's load (PX-NFR-02).
+
 ## 0.12.0
 
 - `paradox retry RUN_ID` runs a failed run again with a fresh set of attempts; `paradox cancel RUN_ID` cancels a queued run. Both go through the loopback admin endpoint and are recorded as the operator's run actions (PX-REC-04).

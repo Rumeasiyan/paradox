@@ -43,12 +43,23 @@ func Enqueue(ctx context.Context, tx pgx.Tx, rc *river.Client[pgx.Tx], jobID int
 	if err != nil {
 		return "", err
 	}
-	_, err = rc.InsertTx(ctx, tx, RunArgs{RunID: runID, TimeoutS: timeoutS}, &river.InsertOpts{
-		MaxAttempts: maxAttempts,
-		ScheduledAt: dueAt,
-	})
+	// River inserts any job given a scheduled time as "scheduled" and makes
+	// it available only on its 5-second maintenance cycle, which alone would
+	// break the 5-second start of PX-NFR-02. So a job due now or earlier gets
+	// no scheduled time (available at once), and a future one is scheduled
+	// riverSchedulerLead early; the worker waits out the rest (waitUntilDue).
+	opts := &river.InsertOpts{MaxAttempts: maxAttempts}
+	if early := dueAt.Add(-riverSchedulerLead); early.After(time.Now()) {
+		opts.ScheduledAt = early
+	}
+	_, err = rc.InsertTx(ctx, tx, RunArgs{RunID: runID, TimeoutS: timeoutS}, opts)
 	return runID, err
 }
+
+// riverSchedulerLead matches River's job scheduler interval (5 seconds,
+// not configurable): how early a future run's River job is scheduled so it
+// is available by its due time.
+const riverSchedulerLead = 5 * time.Second
 
 // CancelRiverJobs cancels the River jobs carrying a run, in tx, so a
 // cancelled run never wakes its system. Used by the queue API and the

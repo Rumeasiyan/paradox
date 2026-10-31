@@ -153,6 +153,9 @@ const (
 
 // Work carries out one attempt of a run.
 func (w *Worker) Work(ctx context.Context, job *river.Job[RunArgs]) error {
+	if err := w.waitUntilDue(ctx, job.Args.RunID); err != nil {
+		return err
+	}
 	r, next, err := w.start(ctx, job)
 	if err != nil {
 		return err
@@ -397,5 +400,27 @@ func (w *Worker) reportFailure(ctx context.Context, r run, out outcome, log *slo
 	}
 	if _, err := w.D.Pool.Exec(ctx, `UPDATE run SET reported_at = $2 WHERE id = $1 AND reported_at IS NULL`, r.id, w.D.now()); err != nil {
 		log.Error("failure report sent but not recorded", "error", err)
+	}
+}
+
+// waitUntilDue holds a run whose River job became available early (see
+// riverSchedulerLead in scheduler.go) until its due time, so a run never
+// starts before it is due. If PARADOX stops meanwhile, the job is snoozed
+// rather than failed, so the wait costs no attempt.
+func (w *Worker) waitUntilDue(ctx context.Context, runID string) error {
+	var due time.Time
+	err := w.D.Pool.QueryRow(ctx, `SELECT due_at FROM run WHERE id = $1`, runID).Scan(&due)
+	if err != nil {
+		return nil // start() handles a missing run; other errors surface there too
+	}
+	wait := due.Sub(w.D.now())
+	if wait <= 0 {
+		return nil
+	}
+	select {
+	case <-time.After(wait):
+		return nil
+	case <-ctx.Done():
+		return river.JobSnooze(time.Until(due))
 	}
 }

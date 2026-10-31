@@ -8,6 +8,16 @@ Format: date, title, **Decision**, **Why** (including what was rejected and the 
 
 ---
 
+## 2026-10-31: Capacity measured; River jobs handed over available, not scheduled
+
+**Decision:** A run due now or earlier goes to River with no scheduled time, so it is available at once. A future run (`run_at`) is scheduled 5 seconds early, the length of River's job scheduler cycle, and the worker waits until its due time before starting; if PARADOX stops during that wait the job is snoozed, costing no attempt. The capacity test (`PARADOX_LOAD_TEST=1 go test -run TestCapacity ./internal/runner/`) is the check.
+
+**Why:** The first capacity test failed PX-NFR-02: an average start delay of 3 seconds and a worst of 5.8 seconds even at light load. River inserts any job given a scheduled time as "scheduled" and moves it to "available" only on a 5-second maintenance cycle whose interval cannot be set; PARADOX always passed the due time, so every run waited for that cycle. Rejected: polling faster (does not touch that cycle), our own hand-over table for future runs (a schema change for what an early schedule and a short wait solve).
+
+**Consequences:** Measured on the local stack (two-connection pool, test inserts sharing it): a burst of 2000 runs at 93 runs a second (about 8 million a day against the PRD's 10,000); steady 2 runs a second with worst start delay 1.1 s; 20 runs a second still 1.0 s worst; peak memory 19 MiB for the whole test process against a 200 MiB limit. A future run can hold a worker slot for up to 5 seconds before it starts.
+
+**Refs:** `internal/runner/scheduler.go`, `internal/runner/runner.go`, `internal/runner/load_test.go`, PX-NFR-01, PX-NFR-02
+
 ## 2026-10-31: A failed run keeps its data for 7 days so the operator can retry it
 
 **Decision:** Job data is wiped when a run ends, except a failed run's, which is kept for `PARADOX_FAILED_DATA_KEEP` (default 7 days) and then wiped by retention. The operator can retry a failed run, scheduled or queued, while its data is still there. PX-REC-02 and the privacy requirement now say so (PRD 1.3).
