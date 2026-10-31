@@ -24,6 +24,7 @@ import (
 	"github.com/Rumeasiyan/paradox/internal/db"
 	"github.com/Rumeasiyan/paradox/internal/health"
 	reporting "github.com/Rumeasiyan/paradox/internal/report"
+	"github.com/Rumeasiyan/paradox/internal/retention"
 	"github.com/Rumeasiyan/paradox/internal/runner"
 	"github.com/Rumeasiyan/paradox/internal/schedule"
 	"github.com/Rumeasiyan/paradox/internal/systems"
@@ -138,7 +139,7 @@ func serve(ctx context.Context, stderr io.Writer, getenv func(string) string, re
 	srv := &http.Server{Handler: mux, ReadHeaderTimeout: 10 * time.Second}
 	ln, err := net.Listen("tcp", cfg.Listen)
 	if err != nil {
-		stopRiver(rc, cfg.ShutdownGrace)
+		stopRiver(rc, cfg.ShutdownGrace, logger)
 		return fmt.Errorf("PARADOX_LISTEN %s: %w", cfg.Listen, err)
 	}
 	serveErr := make(chan error, 1)
@@ -149,15 +150,16 @@ func serve(ctx context.Context, stderr io.Writer, getenv func(string) string, re
 	adminLn, err := net.Listen("tcp", cfg.AdminListen)
 	if err != nil {
 		srv.Close()
-		stopRiver(rc, cfg.ShutdownGrace)
+		stopRiver(rc, cfg.ShutdownGrace, logger)
 		return fmt.Errorf("PARADOX_ADMIN_LISTEN %s: %w", cfg.AdminListen, err)
 	}
 	adminSrv := &http.Server{Handler: (&admin.Admin{Pool: pool, Logger: logger}).Handler(), ReadHeaderTimeout: 10 * time.Second}
 	go adminSrv.Serve(adminLn)
 
-	sched := &runner.Scheduler{D: deps, River: rc}
+	sched := &runner.Scheduler{D: deps, River: rc, CatchUp: cfg.CatchUpWindow}
 	go sched.Run(ctx, tickEvery)
 	go reporting.HeartbeatLoop(ctx, reporter, cfg.HeartbeatEvery, logger)
+	go retention.Loop(ctx, pool, retention.DefaultEvery, cfg.RecordKeep, cfg.RequestIDKeep, logger)
 
 	logger.Info("paradox started", "version", paradox.Version, "systems", len(list), "listen", ln.Addr().String())
 	if ready != nil {
@@ -176,13 +178,15 @@ func serve(ctx context.Context, stderr io.Writer, getenv func(string) string, re
 	defer cancel()
 	srv.Shutdown(shut)
 	adminSrv.Shutdown(shut)
-	stopRiver(rc, cfg.ShutdownGrace)
+	stopRiver(rc, cfg.ShutdownGrace, logger)
 	return nil
 }
 
-// stopRiver lets running jobs finish within grace (PX-RUN-05).
-func stopRiver(rc *river.Client[pgx.Tx], grace time.Duration) {
-	ctx, cancel := context.WithTimeout(context.Background(), grace)
-	defer cancel()
-	rc.Stop(ctx)
+// stopRiver lets running jobs finish within grace, then records any
+// attempt still running as interrupted so it is retried after the restart
+// (PX-RUN-05).
+func stopRiver(rc *river.Client[pgx.Tx], grace time.Duration, logger *slog.Logger) {
+	if err := db.StopRiver(rc, grace); err != nil {
+		logger.Warn("stopping the worker", "error", err)
+	}
 }

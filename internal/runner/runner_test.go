@@ -314,8 +314,10 @@ func TestCancelledRunIsNeverCalled(t *testing.T) {
 func TestTickCreatesOneRunAndMovesPastNow(t *testing.T) {
 	h := newHarness(t, nil, nil, nil, jobSpec{"citadel", schedule.WakeNone, "send-reminders", 10, 0})
 	ctx := context.Background()
-	// Due three days ago: still only one run, and the next due time is in the future.
-	h.pool.Exec(ctx, `UPDATE job SET next_due_at = now() - interval '3 days'`)
+	// Due an hour ago, within the default catch-up window: one run, and the
+	// next due time moves past now. (A due time beyond the window is a
+	// missed run instead; see scheduler_rules_test.go.)
+	h.pool.Exec(ctx, `UPDATE job SET next_due_at = now() - interval '59 minutes'`)
 	now := time.Now()
 	if n, err := h.sched.Tick(ctx, now); err != nil || n != 1 {
 		t.Fatalf("first tick: %d, %v", n, err)
@@ -325,7 +327,7 @@ func TestTickCreatesOneRunAndMovesPastNow(t *testing.T) {
 	}
 	var next, last time.Time
 	h.pool.QueryRow(ctx, `SELECT next_due_at, last_due_at FROM job`).Scan(&next, &last)
-	if !next.After(now) || !last.Before(now.Add(-48*time.Hour)) {
+	if !next.After(now) || !last.Before(now.Add(-58*time.Minute)) {
 		t.Fatalf("next %v last %v", next, last)
 	}
 }

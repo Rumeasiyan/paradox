@@ -2,6 +2,14 @@
 
 All notable changes to PARADOX. The version is in `VERSION`; it follows semantic versioning and changes with every completed change that alters behaviour (see `AGENTS.md`, Versioning).
 
+## 0.11.0
+
+- A scheduled due time later than `PARADOX_CATCH_UP` (PARADOX was down) is recorded once as a `missed` run; the most recent due time within the window still runs once (PX-SCH-05).
+- A scheduled job whose previous run is still queued or running records the new due time as `skipped` instead of running twice (PX-SCH-06).
+- Fixed #8: a run cut off by a crash or a shutdown is closed and retried after the restart (or failed and reported if no attempts are left). Shutdown waits `PARADOX_SHUTDOWN_GRACE`, then records unfinished attempts as interrupted. River rescues stuck jobs after one minute or the job's own limit, whichever is longer.
+- Hourly retention: runs older than `PARADOX_RECORD_KEEP` are deleted with their attempts and actions, request IDs after `PARADOX_REQUEST_ID_KEEP`, and any finished run still holding data has it wiped.
+- Parallel runs proven to stay within `PARADOX_MAX_RUNNING`.
+
 ## 0.10.0
 
 - `paradox runs` lists runs for the operator, newest first, filtered by system, job, state (or `-failed`) and how far back (`-since`, default 24 hours); `-json` for scripts. Never shows job data.
