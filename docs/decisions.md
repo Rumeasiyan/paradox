@@ -8,6 +8,16 @@ Format: date, title, **Decision**, **Why** (including what was rejected and the 
 
 ---
 
+## 2026-10-31: Signing wire format: a fixed RFC 9421 profile, one-line keys
+
+**Decision:** Calls are signed with a fixed profile of HTTP Message Signatures (RFC 9421) and Content-Digest (RFC 9530): label `paradox`, covered components `"@method" "@path" "content-digest"`, parameters `created`, `keyid`, `alg="ed25519"` and `tag`, where the tag is the direction (`paradox-to-system` or `system-to-paradox`). The key ID is `paradox` for PARADOX and the system's name for a system. Keys are one line of text: `ed25519-pub:<base64>` and `ed25519-priv:<base64 seed>`. The helper lives in its own module `sign/`, standard library only.
+
+**Why:** A standard profile lets a system in any language verify PARADOX with an existing RFC 9421 library instead of our code. The RFC's `tag` parameter exists for application context, so the direction rides there with no extra header. Only the profile is accepted (verifier rejects any other component list or parameter order), so both sides always build the same signature base. `@authority` is left out because outside systems are reached through a proxy that may present a different host. One-line keys fit env files and `system.pub`; the prefixes make a private key in a public-key file a loud error. Rejected: PEM keys (multi-line, awkward in env files), our own header scheme (no library support), signing every header (proxies add and change headers).
+
+**Consequences:** `TestSignatureBaseIsStable` pins the format; changing it is a breaking contract change (PX-CON-02). Teams using `openssl` must convert keys; the key generator (story 6) writes the right form. A `go.work` joins the service and `sign` locally.
+
+**Refs:** `sign/`, PX-SIG-01 to PX-SIG-06, PX-CON-03
+
 ## 2026-10-31: YAML and cron libraries for schedule files
 
 **Decision:** Schedule files are parsed with `go.yaml.in/yaml/v3` (node API, for line numbers) and repeat times with `github.com/robfig/cron/v3` (`ParseStandard`: five fields or `@` shortcuts). A timezone prefix inside a cron expression (`TZ=`, `CRON_TZ=`) is refused.

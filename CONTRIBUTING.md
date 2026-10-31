@@ -24,7 +24,7 @@ By contributing, you agree that your contribution is licensed under the [Apache 
 ## Pull requests
 
 - Keep each pull request to one change.
-- Run `gofmt`, `go vet ./...` and `go test ./...` before you push; all must pass.
+- Run `gofmt -l .`, `go vet ./... ./sign/...` and `go test ./... ./sign/...` before you push; all must pass.
 - Add or update tests for any behaviour you change.
 - Write in plain British English in docs and messages.
 - No site-specific values (server paths, hostnames, keys) in code, tests or docs. Use settings and examples instead.

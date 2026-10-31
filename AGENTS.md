@@ -20,6 +20,7 @@ Status: design is frozen (PRD v1.1); the build follows `docs/backlog.md`.
 | `docs/decisions.md` | Why things are the way they are. Read before reversing anything. |
 | `CHANGELOG.md`, `VERSION` | Release history and the one version number. |
 | `CONTRIBUTING.md`, `SECURITY.md` | Contribution rules (DCO) and private vulnerability reporting. |
+| `sign/` | The signing helper, a separate Go module with its own version, imported by systems. Standard library only. Its signature base is pinned by `TestSignatureBaseIsStable`: if that test must change, the contract has a breaking change. |
 | `brand/` | Logo files and the prompt that generated them (`brand/prompt.txt`). |
 
 ## Constraints
@@ -43,7 +44,7 @@ Status: design is frozen (PRD v1.1); the build follows `docs/backlog.md`.
 | Re-render the architecture diagram after editing the `.dot` | `dot -Tsvg docs/diagrams/paradox-architecture.dot -o docs/diagrams/paradox-architecture.svg` |
 | Redraw the data model and rewrite the PRD dictionary | `python3 docs/diagrams/build_erd.py` |
 | Read the version | `cat VERSION` |
-| Go checks (Go 1.27) | `gofmt -l .` (must print nothing), `go vet ./...`, `go test ./...` |
+| Go checks (Go 1.27; `go.work` joins the service and the `sign` module) | `gofmt -l .` (must print nothing), `go vet ./... ./sign/...`, `go test ./... ./sign/...` |
 | Run the command | `go run ./cmd/paradox -version` |
 
 ## Conventions

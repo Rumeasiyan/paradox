@@ -40,11 +40,11 @@ Tracked in #2.
 | 1 | [x] | Solo | E-ENB-01 | Go module skeleton, `paradox -version` read from `VERSION` | PX-NFR-07 | Must | |
 | 2 | [x] | Solo | E-SYS-01 | Settings from the environment with generic defaults | PX-NFR-07, PX-SYS-04 | Must | 1 |
 | 3 | [x] | Solo | E-SCH-01 | Schedule file parser with file, line and fault in errors | PX-SCH-02, PX-SCH-04, PX-SYS-03, PX-SYS-04, PX-CON-01 | Must | 1 |
-| 4 | [ ] | Solo | E-SYS-02 | Systems folder reader: schedule file and public keys per system | PX-SCH-01, PX-SYS-01, PX-SYS-02, PX-SYS-05, PX-SIG-06 | Must | 2, 3 |
-| 5 | [ ] | Solo | E-SIG-01 | Signing helper module: sign and verify in both directions | PX-SIG-01, PX-SIG-02, PX-SIG-03, PX-SIG-04, PX-SIG-06, PX-CON-03 | Must | 1 |
-| 6 | [ ] | Solo | E-CON-01 | Key generator command | PX-CON-04 | Must | 5 |
-| 7 | [ ] | Solo | E-CON-02 | Contract docs: schedule format, queue API, signing scheme, settings | PX-CON-01, PX-CON-02 | Must | 2, 3, 5 |
-| 8 | [ ] | With you | E-CON-03 | Tag the first contract version | PX-CON-01, PX-CON-02 | Must | 4, 6, 7 |
+| 4 | [x] | Solo | E-SIG-01 | Signing helper module: sign and verify in both directions | PX-SIG-01, PX-SIG-02, PX-SIG-03, PX-SIG-04, PX-SIG-06, PX-CON-03 | Must | 1 |
+| 5 | [ ] | Solo | E-SYS-02 | Systems folder reader: schedule file and public keys per system | PX-SCH-01, PX-SYS-01, PX-SYS-02, PX-SYS-05, PX-SIG-06 | Must | 2, 3, 4 |
+| 6 | [ ] | Solo | E-CON-01 | Key generator command | PX-CON-04 | Must | 4 |
+| 7 | [ ] | Solo | E-CON-02 | Contract docs: schedule format, queue API, signing scheme, settings | PX-CON-01, PX-CON-02 | Must | 2, 3, 4 |
+| 8 | [ ] | With you | E-CON-03 | Tag the first contract version | PX-CON-01, PX-CON-02 | Must | 5, 6, 7 |
 
 Notes:
 - **E-ENB-01:** no CI yet (CI is a third-party service; it arrives in story 35).
@@ -60,11 +60,11 @@ Tracked in #4; story 9 answers #3.
 |---|---|---|---|---|---|---|---|
 | 9 | [ ] | Solo | E-ENB-02 | Local database stack with PgBouncer in session mode; River connected | AB 5, AB 6, PX-NFR-02 | Must | 1 |
 | 10 | [ ] | Solo | E-REC-01 | Database schema and migrations from Annex A | PX-REC-01 | Must | 9 |
-| 11 | [ ] | Wave 1 | E-SCH-02 | Load the timetable on start, times in UTC | PX-SCH-03, PX-SYS-05; HW A1 to A3 | Must | 4, 10 |
+| 11 | [ ] | Wave 1 | E-SCH-02 | Load the timetable on start, times in UTC | PX-SCH-03, PX-SYS-05; HW A1 to A3 | Must | 5, 10 |
 | 12 | [ ] | Wave 1 | E-RUN-01 | Waker interface with a local stand-in | PX-RUN-01, PX-RUN-02; AB 7 | Must | 1 |
 | 13 | [ ] | Wave 1 | E-REP-01 | Reporter interface with a log stand-in; heartbeat | PX-REP-02, PX-REP-03; AB 10 | Must | 1 |
 | 14 | [ ] | Wave 1 | E-REP-02 | Health check tied to the database | PX-REP-04 | Must | 10 |
-| 15 | [ ] | Wave 1 | E-ENB-03 | Test system that sleeps and answers `/jobs/<name>` | HW A8, HW A9 | Must | 5 |
+| 15 | [ ] | Wave 1 | E-ENB-03 | Test system that sleeps and answers `/jobs/<name>` | HW A8, HW A9 | Must | 4 |
 | 16 | [ ] | Solo | E-RUN-02 | Runner: due job, run, wake, signed call, time limit, record | PX-RUN-01, PX-RUN-02, PX-RUN-03, PX-REC-01; HW A4 to A12 | Must | 11, 12, 15 |
 | 17 | [ ] | Solo | E-REP-03 | Retries with backoff, then one failure report | PX-REP-01, PX-REP-02; HW A13 to A15 | Must | 13, 16 |
 
