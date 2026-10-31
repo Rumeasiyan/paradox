@@ -129,13 +129,14 @@ Tracked in #6 and #7.
 | 37 | [x] | Solo | E-ENB-09 | End-to-end stack with real Sablier, monitor and PgBouncer | HW A1 to A15, HW B1 to B5, PX-NFR-02 | Must | 32, 34, 35, 36 |
 | 38 | [x] | With you | E-ENB-10 | Publish the first image | PX-NFR-05 | Must | 37 |
 | 39 | [ ] | With you | E-ENB-11 | On the server: deploy, roll back, redeploy, restart after a crash | PX-NFR-03 | Must | 38 |
-| 40 | [ ] | With you | E-ENB-12 | On the server: database in the nightly backup, restore test passes | PX-NFR-04 | Must | 39 |
-| 41 | [ ] | With you | E-ENB-13 | On the server: an outside system queues and runs a job through the proxy | PX-SYS-03, PX-SYS-04; AB 4, AB 9 | Should | 39 |
+| 40 | [x] | With you | E-ENB-12 | On the server: database in the nightly backup, restore test passes | PX-NFR-04 | Must | 39 |
+| 41 | [x] | With you | E-ENB-13 | On the server: an outside system queues and runs a job through the proxy | PX-SYS-03, PX-SYS-04; AB 4, AB 9 | Should | 39 |
 
 Notes:
 - **E-ENB-06, E-ENB-07:** tested locally against real Sablier and Uptime Kuma containers; the stand-ins from stories 12 and 13 stay for unit tests.
 - **E-ENB-10:** the tag is whatever `VERSION` holds then. After the owner's OK, tell the deployment's maintainers the tag.
 - **E-ENB-11 to E-ENB-13:** the server wiring is done in the deployment's own repository; this side supplies the image, the settings list and the checks, and records the outcome in the issue.
+- **E-ENB-11 to E-ENB-13, outcome (v0.13.0):** deploy, redeploy of the same tag, crash restart, nightly backup with a restore into a scratch database, and an outside system queuing through the proxy all passed. Roll back waits for a second published image (#9), so story 39 stays open until then.
 
 ## Not in the PRD
 
