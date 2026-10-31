@@ -48,7 +48,7 @@ Status: design is frozen (PRD v1.2); the build follows `docs/backlog.md`.
 | Read the version | `cat VERSION` |
 | Go checks (Go 1.27; `go.work` joins the service and the `sign` module) | `gofmt -l .` (must print nothing), `go vet ./... ./sign/...`, `go test ./... ./sign/...` |
 | Run the command | `go run ./cmd/paradox -version` |
-| Local database for tests (PostgreSQL + PgBouncer, session pool of 2, non-superuser role) | `docker compose -f dev/compose.yaml up -d`, then `export PARADOX_TEST_DATABASE_URL=postgres://paradox:paradox@localhost:6432/paradox`. Database tests skip without it; run them before marking a database story done. |
+| Local database for tests (PostgreSQL + PgBouncer, session pool of 2, non-superuser role) | `docker compose -f dev/compose.yaml up -d`, then `export PARADOX_TEST_DATABASE_URL=postgres://paradox:paradox@localhost:6432/paradox`. Database tests skip without it; run them with `go test -p 1 ./...` (they share one database) before marking a database story done. |
 
 ## Conventions
 
